@@ -1,0 +1,15 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /evidences/{uid}/{elementId}/{fileName} {
+      // أي مستخدم مسجّل دخوله يستطيع قراءة الملف (لعرض شواهد المعلمين في لوحة المدير)
+      allow read: if request.auth != null;
+
+      // المعلم يرفع الملفات إلى مجلده الخاص فقط، بحد أقصى 10 ميجابايت للملف
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}

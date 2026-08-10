@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // مستند صغير يُنشأ مرة واحدة عند إعداد أول حساب مدير (setup.html)
+    // ويُستخدم لمنع إنشاء أي حساب "مدير" إضافي بدون صلاحية
+    match /meta/system {
+      allow read: if true;
+      allow create: if isSignedIn() && !exists(/databases/$(database)/documents/meta/system);
+      allow update, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+
+      allow create: if isAdmin()
+        || (isSignedIn() && request.auth.uid == uid
+            && request.resource.data.role == 'admin'
+            && !exists(/databases/$(database)/documents/meta/system));
+
+      allow update: if isAdmin()
+        || (isSignedIn() && request.auth.uid == uid
+            && request.resource.data.role == resource.data.role);
+
+      allow delete: if isAdmin();
+    }
+
+    // يستخدم كفهرس لضمان تفرّد أسماء المستخدمين وربطها بمعرّف الحساب (uid)
+    match /usernames/{username} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin()
+        || (isSignedIn() && request.resource.data.uid == request.auth.uid);
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update: if false;
+    }
+
+    match /elements/{elementId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /evidences/{evidenceId} {
+      allow read: if isSignedIn() &&
+        (isAdmin() || resource.data.teacherUid == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.teacherUid == request.auth.uid;
+
+      allow delete: if isSignedIn() &&
+        (isAdmin() || resource.data.teacherUid == request.auth.uid);
+
+      allow update: if false;
+    }
+  }
+}

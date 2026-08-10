@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تسجيل الدخول | نظام تقييم الأداء الوظيفي</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="login-shell">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="brand-text">
+        <strong>نظام تقييم الأداء الوظيفي</strong>
+        <small>بوابة المعلمين والإدارة</small>
+      </div>
+    </div>
+
+    <h1 class="login-title">تسجيل الدخول</h1>
+    <p class="login-sub">أدخل اسم المستخدم وكلمة المرور الخاصة بحسابك</p>
+
+    <div id="loginMsg" class="form-msg"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">اسم المستخدم</label>
+        <input id="username" type="text" autocomplete="username" placeholder="مثال: ahmed.ali" required />
+      </div>
+      <div class="field">
+        <label for="password">كلمة المرور</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" id="loginBtn" class="btn btn-primary">دخول</button>
+    </form>
+
+    <p class="login-foot">لا تملك حساباً؟ يُرجى التواصل مع مدير النظام في مدرستك لإنشاء حساب لك.</p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/common.js"></script>
+<script>
+  const form = document.getElementById("loginForm");
+  const msg = document.getElementById("loginMsg");
+  const btn = document.getElementById("loginBtn");
+
+  // إن كان المستخدم مسجّلاً دخوله بالفعل، حوّله مباشرة إلى صفحته
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) return;
+    const doc = await db.collection("users").doc(user.uid).get();
+    if (doc.exists) {
+      window.location.href = doc.data().role === "admin" ? "admin.html" : "teacher.html";
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideMsg(msg);
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!username || !password) return;
+
+    btn.disabled = true;
+    btn.textContent = "جارٍ التحقق...";
+
+    try {
+      const email = usernameToEmail(username);
+      const cred = await auth.signInWithEmailAndPassword(email, password);
+      const profileDoc = await db.collection("users").doc(cred.user.uid).get();
+
+      if (!profileDoc.exists) {
+        await auth.signOut();
+        showMsg(msg, "تعذّر العثور على بيانات هذا الحساب. تواصل مع مدير النظام.", "error");
+        return;
+      }
+      const role = profileDoc.data().role;
+      window.location.href = role === "admin" ? "admin.html" : "teacher.html";
+    } catch (err) {
+      console.error(err);
+      let text = "اسم المستخدم أو كلمة المرور غير صحيحة.";
+      if (err.code === "auth/too-many-requests") text = "محاولات كثيرة، يُرجى المحاولة لاحقاً.";
+      if (err.code === "auth/network-request-failed") text = "تعذّر الاتصال بالخادم، تحقق من الإنترنت.";
+      showMsg(msg, text, "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "دخول";
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>صفحتي | نظام تقييم الأداء الوظيفي</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="brand-text">
+        <strong>تقييم الأداء</strong>
+        <small>صفحة المعلم</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">القوائم</div>
+      <button class="nav-link active" data-section="portfolio"><span class="dot"></span> ملف الأداء الوظيفي</button>
+      <div class="nav-group-label">الحساب</div>
+      <button class="nav-link" data-section="account"><span class="dot"></span> إعدادات الحساب</button>
+      <button class="nav-link" data-logout><span class="dot"></span> تسجيل الخروج</button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="user-avatar" id="tAvatar">؟</div>
+        <div class="user-chip-info">
+          <strong id="tName">—</strong>
+          <small id="tUsername">—</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ============ ملف الأداء الوظيفي ============ -->
+    <section class="section" data-panel="portfolio">
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">ملف الأداء الوظيفي</h1>
+          <p class="page-sub">أضف شواهدك تحت كل عنصر من عناصر الأداء الوظيفي</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="progress-hero">
+          <div class="progress-ring-wrap">
+            <svg width="150" height="150" viewBox="0 0 150 150">
+              <defs>
+                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#14a696" />
+                  <stop offset="100%" stop-color="#1fd8c4" />
+                </linearGradient>
+              </defs>
+              <circle class="ring-track" cx="75" cy="75" r="62" />
+              <circle class="ring-fill" id="ringFill" cx="75" cy="75" r="62" stroke-dasharray="389.6" stroke-dashoffset="389.6" />
+            </svg>
+            <div class="ring-center">
+              <span class="pct" id="ringPct">0%</span>
+              <span class="pct-label">نسبة الإنجاز</span>
+            </div>
+          </div>
+          <div style="flex:1; min-width:220px">
+            <p class="panel-sub" style="margin-bottom:10px">أنجزت <strong id="doneCount">0</strong> من أصل <strong id="totalCount">0</strong> عنصراً — النسبة محسوبة حسب الوزن النسبي لكل عنصر</p>
+            <div class="progress-bar-track"><div class="progress-bar-fill" id="mainBar" style="width:0%"></div></div>
+            <div class="progress-segments" id="segments"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="elementsWrap">
+        <div class="loader"></div>
+      </div>
+    </section>
+
+    <!-- ============ إعدادات الحساب ============ -->
+    <section class="section" data-panel="account" hidden>
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">إعدادات الحساب</h1>
+          <p class="page-sub">تغيير اسم المستخدم أو كلمة المرور الخاصة بك</p>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="panel">
+          <h2 class="panel-title">تغيير اسم المستخدم</h2>
+          <div id="usernameMsg" class="form-msg"></div>
+          <form id="usernameForm">
+            <div class="field">
+              <label for="newUsername">اسم المستخدم الجديد</label>
+              <input id="newUsername" type="text" required />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:auto; padding-inline:26px">حفظ</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">تغيير كلمة المرور</h2>
+          <div id="passwordMsg" class="form-msg"></div>
+          <form id="passwordForm">
+            <div class="field">
+              <label for="curPassword">كلمة المرور الحالية</label>
+              <input id="curPassword" type="password" required />
+            </div>
+            <div class="field">
+              <label for="newPassword">كلمة المرور الجديدة</label>
+              <input id="newPassword" type="password" minlength="6" required />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:auto; padding-inline:26px">حفظ</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal">
+    <h3 class="modal-title" id="confirmTitle">تأكيد الحذف</h3>
+    <p class="modal-sub" id="confirmSub">هل أنت متأكد من هذا الإجراء؟ لا يمكن التراجع عنه.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirmCancel">إلغاء</button>
+      <button class="btn btn-danger" id="confirmOk">حذف</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/teacher.js"></script>
+</body>
+</html>

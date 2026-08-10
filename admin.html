@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة تحكم المدير | نظام تقييم الأداء الوظيفي</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- الشريط الجانبي -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="brand-text">
+        <strong>تقييم الأداء</strong>
+        <small>لوحة تحكم المدير</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">القوائم</div>
+      <button class="nav-link active" data-section="overview"><span class="dot"></span> نظرة عامة</button>
+      <button class="nav-link" data-section="teachers"><span class="dot"></span> إدارة المعلمين</button>
+      <button class="nav-link" data-section="elements"><span class="dot"></span> عناصر التقييم</button>
+      <div class="nav-group-label">الحساب</div>
+      <button class="nav-link" data-section="account"><span class="dot"></span> إعدادات الحساب</button>
+      <button class="nav-link" data-logout><span class="dot"></span> تسجيل الخروج</button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="user-avatar" id="adminAvatar">؟</div>
+        <div class="user-chip-info">
+          <strong id="adminName">—</strong>
+          <small id="adminUsername">—</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="main">
+
+    <!-- ============ نظرة عامة ============ -->
+    <section class="section" data-panel="overview">
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">نظرة عامة</h1>
+          <p class="page-sub">ملخص سريع لأداء المعلمين واكتمال الشواهد</p>
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-label">عدد المعلمين</div>
+          <div class="stat-value" id="statTeachers">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">عناصر الأداء الوظيفي</div>
+          <div class="stat-value" id="statElements">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">متوسط نسبة الإنجاز</div>
+          <div class="stat-value" id="statAvg">0%</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">تقدّم المعلمين</h2>
+        <p class="panel-sub">النسبة محسوبة حسب الوزن النسبي للعناصر التي أضاف لها المعلم شاهداً واحداً على الأقل</p>
+        <div id="overviewTableWrap">
+          <div class="loader"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ إدارة المعلمين ============ -->
+    <section class="section" data-panel="teachers" hidden>
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">إدارة المعلمين</h1>
+          <p class="page-sub">إضافة حسابات المعلمين وحذفها</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <h2 class="panel-title">إضافة معلم جديد</h2>
+        <p class="panel-sub">سيستخدم المعلم اسم المستخدم وكلمة المرور أدناه لتسجيل الدخول، وبإمكانه تغييرهما لاحقاً</p>
+        <div id="teacherMsg" class="form-msg"></div>
+        <form id="teacherForm" class="grid grid-2">
+          <div class="field">
+            <label for="tName">الاسم الكامل</label>
+            <input id="tName" type="text" placeholder="مثال: عبدالله سالم" required />
+          </div>
+          <div class="field">
+            <label for="tUsername">اسم المستخدم</label>
+            <input id="tUsername" type="text" placeholder="مثال: abdullah.salem" required />
+          </div>
+          <div class="field">
+            <label for="tEmail">البريد الإلكتروني (اختياري، لأغراض التواصل فقط)</label>
+            <input id="tEmail" type="email" placeholder="example@mail.com" />
+          </div>
+          <div class="field">
+            <label for="tPassword">كلمة المرور المبدئية</label>
+            <input id="tPassword" type="text" placeholder="6 أحرف على الأقل" required minlength="6" />
+          </div>
+          <div style="grid-column:1/-1">
+            <button type="submit" id="teacherBtn" class="btn btn-primary" style="width:auto; padding-inline:26px">إضافة المعلم</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">قائمة المعلمين</h2>
+        <div id="teachersTableWrap"><div class="loader"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ عناصر التقييم ============ -->
+    <section class="section" data-panel="elements" hidden>
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">عناصر الأداء الوظيفي</h1>
+          <p class="page-sub">إضافة العناصر وتعديل أوزانها وحذفها — تظهر هذه العناصر في صفحة كل معلم</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="seedBtn">استيراد العناصر الرسمية (11 عنصراً)</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <h2 class="panel-title" id="elementFormTitle">إضافة عنصر جديد</h2>
+        <div id="elementMsg" class="form-msg"></div>
+        <form id="elementForm" class="grid grid-2">
+          <input type="hidden" id="eId" />
+          <div class="field">
+            <label for="eTitle">عنوان العنصر</label>
+            <input id="eTitle" type="text" placeholder="مثال: أداء الواجبات الوظيفية" required />
+          </div>
+          <div class="field">
+            <label for="eWeight">الوزن النسبي (%)</label>
+            <input id="eWeight" type="number" min="1" max="100" placeholder="10" required />
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label for="eExamples">أمثلة على تحقيق العنصر (اختياري)</label>
+            <input id="eExamples" type="text" placeholder="يفصل بينها بـ /" />
+          </div>
+          <div style="grid-column:1/-1; display:flex; gap:10px">
+            <button type="submit" id="elementBtn" class="btn btn-primary" style="width:auto; padding-inline:26px">حفظ العنصر</button>
+            <button type="button" id="elementCancelBtn" class="btn btn-ghost" style="display:none">إلغاء التعديل</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">العناصر الحالية</h2>
+        <p class="panel-sub">مجموع الأوزان الحالي: <span id="weightSum">0</span>% (يفضّل أن يكون المجموع 100%)</p>
+        <div id="elementsTableWrap"><div class="loader"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ إعدادات الحساب ============ -->
+    <section class="section" data-panel="account" hidden>
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">إعدادات الحساب</h1>
+          <p class="page-sub">تغيير اسم المستخدم أو كلمة المرور الخاصة بحساب المدير</p>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="panel">
+          <h2 class="panel-title">تغيير اسم المستخدم</h2>
+          <div id="usernameMsg" class="form-msg"></div>
+          <form id="usernameForm">
+            <div class="field">
+              <label for="newUsername">اسم المستخدم الجديد</label>
+              <input id="newUsername" type="text" required />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:auto; padding-inline:26px">حفظ</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">تغيير كلمة المرور</h2>
+          <div id="passwordMsg" class="form-msg"></div>
+          <form id="passwordForm">
+            <div class="field">
+              <label for="curPassword">كلمة المرور الحالية</label>
+              <input id="curPassword" type="password" required />
+            </div>
+            <div class="field">
+              <label for="newPassword">كلمة المرور الجديدة</label>
+              <input id="newPassword" type="password" minlength="6" required />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:auto; padding-inline:26px">حفظ</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal">
+    <h3 class="modal-title" id="confirmTitle">تأكيد الحذف</h3>
+    <p class="modal-sub" id="confirmSub">هل أنت متأكد من هذا الإجراء؟ لا يمكن التراجع عنه.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirmCancel">إلغاء</button>
+      <button class="btn btn-danger" id="confirmOk">حذف</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
