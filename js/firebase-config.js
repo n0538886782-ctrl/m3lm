@@ -7,12 +7,12 @@
    ====================================================== */
 
 const firebaseConfig = {
-  apiKey: "ضع_API_KEY_هنا",
-  authDomain: "ضع_PROJECT_ID_هنا.firebaseapp.com",
-  projectId: "ضع_PROJECT_ID_هنا",
-  storageBucket: "ضع_PROJECT_ID_هنا.appspot.com",
-  messagingSenderId: "ضع_SENDER_ID_هنا",
-  appId: "ضع_APP_ID_هنا"
+  apiKey: "AIzaSyArYalXVXZ0WBWyp_Ac10LR0ONaDg5Cqz0",
+  authDomain: "m3lm-f7452.firebaseapp.com",
+  projectId: "m3lm-f7452",
+  storageBucket: "m3lm-f7452.firebasestorage.app",
+  messagingSenderId: "388423628695",
+  appId: "1:388423628695:web:b5706fb0c9873bf5aeb6d2"
 };
 
 // نطاق البريد الداخلي المستخدم لتحويل "اسم المستخدم" إلى بريد إلكتروني
