@@ -110,21 +110,9 @@ function renderElements() {
         </div>
 
         <form class="evidence-form" data-form>
-          <div class="field field-type">
-            <label>نوع الشاهد</label>
-            <select data-type>
-              <option value="link">رابط</option>
-              <option value="image">صورة</option>
-              <option value="file">ملف</option>
-            </select>
-          </div>
-          <div class="field" data-field-url>
-            <label>الرابط</label>
-            <input type="url" placeholder="https://" data-url />
-          </div>
-          <div class="field" data-field-file style="display:none">
-            <label>اختر الملف</label>
-            <input type="file" data-file />
+          <div class="field" data-field-url style="flex:2">
+            <label>رابط الشاهد (من Google Drive أو أي تخزين سحابي)</label>
+            <input type="url" placeholder="https://drive.google.com/..." data-url required />
           </div>
           <div class="field">
             <label>وصف مختصر (اختياري)</label>
@@ -138,16 +126,6 @@ function renderElements() {
 
     // فتح/طي البطاقة
     card.querySelector("[data-toggle]").addEventListener("click", () => card.classList.toggle("open"));
-
-    // تبديل حقل الرابط/الملف حسب النوع
-    const typeSelect = card.querySelector("[data-type]");
-    const urlField = card.querySelector("[data-field-url]");
-    const fileField = card.querySelector("[data-field-file]");
-    typeSelect.addEventListener("change", () => {
-      const isLink = typeSelect.value === "link";
-      urlField.style.display = isLink ? "" : "none";
-      fileField.style.display = isLink ? "none" : "";
-    });
 
     // إضافة شاهد
     card.querySelector("[data-form]").addEventListener("submit", (e) => handleAddEvidence(e, el, card));
@@ -163,36 +141,21 @@ async function handleAddEvidence(e, el, card) {
   e.preventDefault();
   const form = e.target;
   const submitBtn = form.querySelector("button[type=submit]");
-  const type = form.querySelector("[data-type]").value;
   const note = form.querySelector("[data-note]").value.trim();
   const urlInput = form.querySelector("[data-url]");
-  const fileInput = form.querySelector("[data-file]");
 
   submitBtn.disabled = true;
   submitBtn.textContent = "جارٍ الإضافة...";
 
   try {
-    let url, fileName = null;
-
-    if (type === "link") {
-      url = urlInput.value.trim();
-      if (!url) throw new Error("أدخل رابطاً صحيحاً");
-    } else {
-      const file = fileInput.files[0];
-      if (!file) throw new Error("اختر ملفاً");
-      if (file.size > 10 * 1024 * 1024) throw new Error("حجم الملف يجب ألا يتجاوز 10 ميجابايت");
-      fileName = file.name;
-      const path = `evidences/${PROFILE.uid}/${el.id}/${Date.now()}_${file.name}`;
-      const ref = storage.ref(path);
-      await ref.put(file);
-      url = await ref.getDownloadURL();
-    }
+    const url = urlInput.value.trim();
+    if (!url) throw new Error("أدخل رابطاً صحيحاً");
 
     await db.collection("evidences").add({
       teacherUid: PROFILE.uid,
       teacherUsername: PROFILE.username,
       elementId: el.id,
-      type, url, fileName, note,
+      type: "link", url, fileName: null, note,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -212,11 +175,7 @@ async function handleAddEvidence(e, el, card) {
 
 function handleDeleteEvidence(evidenceId, el) {
   confirmAction("حذف الشاهد", "هل أنت متأكد من حذف هذا الشاهد؟ لا يمكن التراجع عن هذا الإجراء.", async () => {
-    const evidence = EVIDENCES.find((e) => e.id === evidenceId);
     try {
-      if (evidence?.type !== "link" && evidence?.url) {
-        try { await storage.refFromURL(evidence.url).delete(); } catch (_) { /* تجاهل إن كان الملف محذوفاً مسبقاً */ }
-      }
       await db.collection("evidences").doc(evidenceId).delete();
       await loadAll();
       const cards = document.querySelectorAll(".element-card");
