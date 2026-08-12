@@ -483,16 +483,48 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
 }
 @keyframes spin{to{transform:rotate(360deg);}}
 
-.topbar-mobile{display:none;}
+.mobile-menu-btn{display:none;}
 @media (max-width:920px){
   .app-shell{flex-direction:column;}
   .sidebar{
-    width:100%; height:auto; position:relative; flex-direction:row;
-    align-items:center; justify-content:space-between; padding:16px 20px;
+    width:100%; height:auto; position:sticky; top:0; z-index:40;
+    flex-direction:row; align-items:center; justify-content:space-between;
+    padding:14px 18px; flex-wrap:wrap;
+    box-shadow:0 6px 18px -10px rgba(0,0,0,0.5);
   }
-  .sidebar-nav, .sidebar-foot{display:none;}
-  .main{padding:22px 18px 50px;}
-  .progress-hero{gap:18px;}
+  .mobile-menu-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:40px; height:40px; border-radius:10px; flex-shrink:0;
+    background:rgba(255,255,255,0.06); border:1px solid var(--panel-border);
+    color:var(--text-1);
+  }
+  .sidebar-nav{
+    display:none; width:100%; order:3;
+    margin-top:14px; padding-top:14px; border-top:1px solid var(--panel-border);
+  }
+  .sidebar-foot{
+    display:none; width:100%; order:4; margin-top:0;
+  }
+  .sidebar.menu-open .sidebar-nav{display:block;}
+  .sidebar.menu-open .sidebar-foot{
+    display:block; margin-top:14px; padding-top:14px; border-top:1px solid var(--panel-border);
+  }
+  .nav-link{padding:13px 14px; font-size:15px;}
+  .main{padding:20px 16px 60px;}
+  .progress-hero{gap:16px;}
+  .progress-ring-wrap{width:120px; height:120px;}
+  .element-head{padding:14px;}
+  .evidence-form{flex-direction:column; align-items:stretch;}
+  .evidence-form .field{min-width:0;}
+  .grid-2, .grid-3{grid-template-columns:1fr;}
+  table{font-size:12.5px;}
+  thead th, tbody td{padding:9px 8px;}
+}
+
+@media (max-width:480px){
+  .login-card{padding:28px 20px 24px;}
+  .page-title{font-size:21px;}
+  .panel{padding:18px;}
 }
 
 .link-inline{color:var(--accent-teal); font-weight:600; text-decoration:none; font-size:13px;}

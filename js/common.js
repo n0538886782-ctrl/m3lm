@@ -142,4 +142,16 @@ async function changePassword(currentPassword, newPassword) {
 document.addEventListener("click", (e) => {
   const trigger = e.target.closest("[data-logout]");
   if (trigger) logout();
+
+  const menuBtn = e.target.closest("[data-menu-toggle]");
+  if (menuBtn) {
+    document.querySelector(".sidebar")?.classList.toggle("menu-open");
+  }
+});
+
+// إغلاق القائمة المنسدلة تلقائياً على الجوال عند اختيار قسم
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".nav-link[data-section]")) {
+    document.querySelector(".sidebar")?.classList.remove("menu-open");
+  }
 });
