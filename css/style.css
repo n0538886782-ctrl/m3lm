@@ -148,6 +148,19 @@ input, select, textarea{font-family:inherit;}
 .gov-header-logo{
   display:flex; align-items:center; gap:12px; position:relative; z-index:1; flex-shrink:0;
 }
+.gov-header-logo-badge{
+  background:#ffffff;
+  border-radius:14px;
+  padding:8px 14px;
+  display:flex;
+  align-items:center;
+  box-shadow:0 8px 20px -8px rgba(0,0,0,0.45);
+}
+.gov-header-logo-badge img{
+  display:block;
+  height:52px;
+  width:auto;
+}
 .gov-header-logo-text{display:flex; flex-direction:column; line-height:1.3;}
 .gov-header-logo-text strong{font-family:var(--font-display); font-weight:800; font-size:14.5px; color:var(--text-1);}
 .gov-header-logo-text small{font-size:10px; color:var(--text-3); letter-spacing:0.4px;}
@@ -155,6 +168,9 @@ input, select, textarea{font-family:inherit;}
 @media (max-width:640px){
   .gov-header{padding:14px 18px; border-radius:0 0 20px 20px;}
   .gov-header-text .schools span{font-size:13px;}
+  .gov-header-logo-badge{padding:6px 10px; border-radius:11px;}
+  .gov-header-logo-badge img{height:38px;}
+  .gov-header-logo-text{display:none;}
 }
 
 .login-shell{
