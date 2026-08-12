@@ -115,7 +115,48 @@ input, select, textarea{font-family:inherit;}
 .brand-text strong{font-family:var(--font-display); font-weight:800; font-size:16px; letter-spacing:0.2px;}
 .brand-text small{color:var(--text-2); font-size:12px;}
 
-/* ================= LOGIN PAGE ================= */
+/* ================= الترويسة الرسمية (شعار الوزارة + اسم المدرستين) ================= */
+.gov-header{
+  background:linear-gradient(135deg, var(--bg-royal-1), var(--bg-royal-2));
+  border-radius:0 0 26px 26px;
+  padding:16px 30px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  flex-wrap:wrap;
+  box-shadow:var(--shadow-deep);
+  position:relative;
+  overflow:hidden;
+}
+.gov-header::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1.4px);
+  background-size:20px 20px;
+  opacity:0.5;
+  pointer-events:none;
+}
+.gov-header-text{position:relative; z-index:1;}
+.gov-header-text p{margin:0 0 2px; font-size:12px; color:var(--text-2); line-height:1.6;}
+.gov-header-text p.country{font-weight:700; color:var(--text-1); font-size:12.5px;}
+.gov-header-text .schools{margin-top:8px; display:flex; flex-direction:column; gap:1px;}
+.gov-header-text .schools span{
+  font-family:var(--font-display); font-weight:800; font-size:14.5px; color:var(--text-1);
+  display:block;
+}
+.gov-header-logo{
+  display:flex; align-items:center; gap:12px; position:relative; z-index:1; flex-shrink:0;
+}
+.gov-header-logo-text{display:flex; flex-direction:column; line-height:1.3;}
+.gov-header-logo-text strong{font-family:var(--font-display); font-weight:800; font-size:14.5px; color:var(--text-1);}
+.gov-header-logo-text small{font-size:10px; color:var(--text-3); letter-spacing:0.4px;}
+
+@media (max-width:640px){
+  .gov-header{padding:14px 18px; border-radius:0 0 20px 20px;}
+  .gov-header-text .schools span{font-size:13px;}
+}
+
 .login-shell{
   min-height:100vh;
   display:flex;
