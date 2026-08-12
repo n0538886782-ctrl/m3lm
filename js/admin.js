@@ -5,6 +5,7 @@
 let CURRENT_PROFILE = null;
 let ELEMENTS_CACHE = [];
 let TEACHERS_CACHE = [];
+let ALL_EVIDENCES = [];
 
 const DEFAULT_ELEMENTS = [
   { title: "أداء الواجبات الوظيفية", weight: 10, order: 1, examples: "المشاركة في الفعاليات الوطنية / تعزيز قيم المواطنة لدى الطلاب / التعاون مع المؤسسات الحكومية" },
@@ -254,7 +255,8 @@ async function loadTeachersAndProgress() {
   ]);
 
   TEACHERS_CACHE = teachersSnap.docs.map((d) => ({ uid: d.id, ...d.data() }));
-  const evidences = evidenceSnap.docs.map((d) => d.data());
+  const evidences = evidenceSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  ALL_EVIDENCES = evidences;
 
   TEACHERS_CACHE.forEach((t) => {
     const teacherElements = new Set(evidences.filter((e) => e.teacherUid === t.uid).map((e) => e.elementId));
@@ -281,13 +283,19 @@ async function loadTeachersAndProgress() {
                 <div class="progress-bar-track" style="width:120px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
                 <small style="color:var(--text-3)">${pct}%</small>
               </td>
-              <td><div class="row-actions"><button class="btn btn-danger btn-sm" data-del-teacher="${t.uid}" data-name="${escapeHtml(t.name)}">حذف</button></div></td>
+              <td><div class="row-actions">
+                <button class="btn btn-ghost btn-sm" data-view-evidence="${t.uid}" data-name="${escapeHtml(t.name)}">عرض الشواهد</button>
+                <button class="btn btn-danger btn-sm" data-del-teacher="${t.uid}" data-name="${escapeHtml(t.name)}">حذف</button>
+              </div></td>
             </tr>`;
           }).join("")}
         </tbody>
       </table>`;
     wrap.querySelectorAll("[data-del-teacher]").forEach((btn) =>
       btn.addEventListener("click", () => deleteTeacher(btn.dataset.delTeacher, btn.dataset.name))
+    );
+    wrap.querySelectorAll("[data-view-evidence]").forEach((btn) =>
+      btn.addEventListener("click", () => showTeacherEvidences(btn.dataset.viewEvidence, btn.dataset.name))
     );
   }
 
@@ -356,7 +364,59 @@ function deleteTeacher(uid, name) {
   );
 }
 
-/* ---------------- إعدادات حساب المدير ---------------- */
+/* ---------------- عرض شواهد معلم معيّن (الروابط المضافة) ---------------- */
+function showTeacherEvidences(uid, name) {
+  const overlay = document.getElementById("evidenceModalOverlay");
+  const body = document.getElementById("evidenceModalBody");
+  document.getElementById("evidenceModalTitle").textContent = `شواهد المعلم: ${name}`;
+
+  const evs = ALL_EVIDENCES.filter((e) => e.teacherUid === uid);
+
+  if (!evs.length) {
+    body.innerHTML = `<div class="evidence-empty">لم يُضِف هذا المعلم أي شاهد بعد.</div>`;
+  } else {
+    // تجميع الشواهد حسب العنصر
+    const byElement = {};
+    evs.forEach((e) => {
+      if (!byElement[e.elementId]) byElement[e.elementId] = [];
+      byElement[e.elementId].push(e);
+    });
+
+    body.innerHTML = Object.keys(byElement).map((elId) => {
+      const el = ELEMENTS_CACHE.find((x) => x.id === elId);
+      const title = el ? el.title : "عنصر محذوف";
+      const items = byElement[elId];
+      return `
+        <div style="margin-bottom:16px">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+            <strong style="font-size:13.5px">${escapeHtml(title)}</strong>
+            <span class="tag-weight">${items.length}</span>
+          </div>
+          <div class="evidence-list">
+            ${items.map((ev) => `
+              <div class="evidence-item">
+                <div class="evidence-icon">${evidenceIcon(ev.type)}</div>
+                <div class="evidence-info">
+                  <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">${escapeHtml(ev.note || ev.url)}</a>
+                  <span>${formatDate(ev.createdAt)}</span>
+                </div>
+              </div>`).join("")}
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  overlay.classList.add("show");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("evidenceModalClose")?.addEventListener("click", () => {
+    document.getElementById("evidenceModalOverlay").classList.remove("show");
+  });
+  document.getElementById("evidenceModalOverlay")?.addEventListener("click", (e) => {
+    if (e.target.id === "evidenceModalOverlay") e.currentTarget.classList.remove("show");
+  });
+});
 function setupAccountForms() {
   const uForm = document.getElementById("usernameForm");
   const uMsg = document.getElementById("usernameMsg");
