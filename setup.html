@@ -59,11 +59,19 @@
 <script src="js/common.js"></script>
 <script>
   (async () => {
-    const existingAdmins = await db.collection("users").where("role", "==", "admin").limit(1).get();
-    document.getElementById("loadingState").style.display = "none";
-    if (!existingAdmins.empty) {
-      document.getElementById("alreadySetupState").style.display = "block";
-    } else {
+    try {
+      // نتحقق من مستند meta/system بدل قراءة مجموعة users مباشرة،
+      // لأن قواعد الأمان تمنع أي زائر غير مسجّل دخوله من قراءة users
+      const metaDoc = await db.collection("meta").doc("system").get();
+      document.getElementById("loadingState").style.display = "none";
+      if (metaDoc.exists) {
+        document.getElementById("alreadySetupState").style.display = "block";
+      } else {
+        document.getElementById("setupFormState").style.display = "block";
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById("loadingState").style.display = "none";
       document.getElementById("setupFormState").style.display = "block";
     }
   })();
@@ -88,8 +96,8 @@
 
     try {
       // تحقق أخير من عدم وجود مدير آخر (حماية من التسابق)
-      const check = await db.collection("users").where("role", "==", "admin").limit(1).get();
-      if (!check.empty) {
+      const metaCheck = await db.collection("meta").doc("system").get();
+      if (metaCheck.exists) {
         showMsg(msg, "تم إعداد النظام بالفعل من جهاز آخر. سيتم تحويلك لصفحة الدخول.", "info");
         setTimeout(() => (window.location.href = "index.html"), 1800);
         return;
