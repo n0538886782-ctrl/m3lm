@@ -16,9 +16,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupNav();
     setupAccountForms();
+    renderAdminNote(profile.adminNote);
+    document.getElementById("exportReportBtn").addEventListener("click", () => {
+      printTeacherReport(PROFILE, ELEMENTS, EVIDENCES);
+    });
     await loadAll();
   });
 });
+
+function renderAdminNote(note) {
+  const wrap = document.getElementById("adminNoteWrap");
+  if (!note || !note.trim()) {
+    wrap.innerHTML = "";
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="admin-note-banner">
+      <div class="icon">📝</div>
+      <div>
+        <strong>ملاحظة من المدير</strong>
+        <p>${escapeHtml(note)}</p>
+      </div>
+    </div>`;
+}
 
 function setupNav() {
   const links = document.querySelectorAll(".nav-link[data-section]");

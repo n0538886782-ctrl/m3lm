@@ -32,10 +32,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setupTeacherForm();
     setupElementForm();
     setupAccountForms();
+    setupLogoUpload();
+    setupListToolbar();
     document.getElementById("seedBtn").addEventListener("click", seedDefaultElements);
 
     loadElements();
     loadTeachersAndProgress();
+    loadCurrentLogoPreview();
   });
 });
 
@@ -50,6 +53,7 @@ function setupNav() {
       document.querySelectorAll("section.section").forEach((sec) => {
         sec.hidden = sec.dataset.panel !== target;
       });
+      if (target === "teachers") markEvidenceAsSeen();
     });
   });
 }
@@ -246,9 +250,6 @@ function setupTeacherForm() {
 }
 
 async function loadTeachersAndProgress() {
-  const wrap = document.getElementById("teachersTableWrap");
-  const overviewWrap = document.getElementById("overviewTableWrap");
-
   const [teachersSnap, evidenceSnap] = await Promise.all([
     db.collection("users").where("role", "==", "teacher").get(),
     db.collection("evidences").get(),
@@ -266,40 +267,118 @@ async function loadTeachersAndProgress() {
 
   document.getElementById("statTeachers").textContent = TEACHERS_CACHE.length;
 
+  renderTeachersTable();
+  renderOverview();
+  renderChart();
+  updateEvidenceBadge();
+}
+
+/* ---------------- بحث وترتيب قائمة المعلمين ---------------- */
+function setupListToolbar() {
+  document.getElementById("teacherSearch").addEventListener("input", renderTeachersTable);
+  document.getElementById("teacherSort").addEventListener("change", renderTeachersTable);
+}
+
+function renderTeachersTable() {
+  const wrap = document.getElementById("teachersTableWrap");
+  const search = (document.getElementById("teacherSearch")?.value || "").trim().toLowerCase();
+  const sortBy = document.getElementById("teacherSort")?.value || "name";
+
+  let list = TEACHERS_CACHE.filter((t) =>
+    !search || t.name.toLowerCase().includes(search) || t.username.toLowerCase().includes(search)
+  );
+
+  list = [...list].sort((a, b) => {
+    if (sortBy === "pct-desc") return weightedPct(b.completedIds) - weightedPct(a.completedIds);
+    if (sortBy === "pct-asc") return weightedPct(a.completedIds) - weightedPct(b.completedIds);
+    return a.name.localeCompare(b.name, "ar");
+  });
+
   if (!TEACHERS_CACHE.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="icon">👩‍🏫</div>لا يوجد معلمون مضافون بعد.</div>`;
-  } else {
-    wrap.innerHTML = `
-      <table>
-        <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>نسبة الإنجاز</th><th></th></tr></thead>
-        <tbody>
-          ${TEACHERS_CACHE.map((t) => {
-            const pct = weightedPct(t.completedIds);
-            return `
-            <tr>
-              <td>${escapeHtml(t.name)}</td>
-              <td>@${escapeHtml(t.username)}</td>
-              <td style="min-width:140px">
-                <div class="progress-bar-track" style="width:120px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-                <small style="color:var(--text-3)">${pct}%</small>
-              </td>
-              <td><div class="row-actions">
-                <button class="btn btn-ghost btn-sm" data-view-evidence="${t.uid}" data-name="${escapeHtml(t.name)}">عرض الشواهد</button>
-                <button class="btn btn-danger btn-sm" data-del-teacher="${t.uid}" data-name="${escapeHtml(t.name)}">حذف</button>
-              </div></td>
-            </tr>`;
-          }).join("")}
-        </tbody>
-      </table>`;
-    wrap.querySelectorAll("[data-del-teacher]").forEach((btn) =>
-      btn.addEventListener("click", () => deleteTeacher(btn.dataset.delTeacher, btn.dataset.name))
-    );
-    wrap.querySelectorAll("[data-view-evidence]").forEach((btn) =>
-      btn.addEventListener("click", () => showTeacherEvidences(btn.dataset.viewEvidence, btn.dataset.name))
-    );
+    return;
+  }
+  if (!list.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">🔍</div>لا توجد نتائج مطابقة للبحث.</div>`;
+    return;
   }
 
-  renderOverview();
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>نسبة الإنجاز</th><th></th></tr></thead>
+      <tbody>
+        ${list.map((t) => {
+          const pct = weightedPct(t.completedIds);
+          const hasNote = t.adminNote && t.adminNote.trim();
+          return `
+          <tr>
+            <td>${escapeHtml(t.name)} ${hasNote ? '<span title="يوجد ملاحظة" style="color:var(--accent-gold)">📝</span>' : ""}</td>
+            <td>@${escapeHtml(t.username)}</td>
+            <td style="min-width:140px">
+              <div class="progress-bar-track" style="width:120px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+              <small style="color:var(--text-3)">${pct}%</small>
+            </td>
+            <td><div class="row-actions">
+              <button class="btn btn-ghost btn-sm" data-note="${t.uid}" data-name="${escapeHtml(t.name)}">ملاحظة</button>
+              <button class="btn btn-ghost btn-sm" data-view-evidence="${t.uid}" data-name="${escapeHtml(t.name)}">عرض الشواهد</button>
+              <button class="btn btn-danger btn-sm" data-del-teacher="${t.uid}" data-name="${escapeHtml(t.name)}">حذف</button>
+            </div></td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>`;
+
+  wrap.querySelectorAll("[data-del-teacher]").forEach((btn) =>
+    btn.addEventListener("click", () => deleteTeacher(btn.dataset.delTeacher, btn.dataset.name))
+  );
+  wrap.querySelectorAll("[data-view-evidence]").forEach((btn) =>
+    btn.addEventListener("click", () => showTeacherEvidences(btn.dataset.viewEvidence, btn.dataset.name))
+  );
+  wrap.querySelectorAll("[data-note]").forEach((btn) =>
+    btn.addEventListener("click", () => openNoteModal(btn.dataset.note, btn.dataset.name))
+  );
+}
+
+/* ---------------- رسم بياني لمقارنة أداء المعلمين ---------------- */
+function renderChart() {
+  const wrap = document.getElementById("chartWrap");
+  if (!TEACHERS_CACHE.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">📈</div>أضف معلمين أولاً لعرض المقارنة.</div>`;
+    return;
+  }
+  const sorted = [...TEACHERS_CACHE].sort((a, b) => weightedPct(b.completedIds) - weightedPct(a.completedIds));
+  wrap.innerHTML = sorted.map((t) => {
+    const pct = weightedPct(t.completedIds);
+    return `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${escapeHtml(t.name)}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%"></div></div>
+        <div class="chart-bar-pct">${pct}%</div>
+      </div>`;
+  }).join("");
+}
+
+/* ---------------- شارة الشواهد الجديدة ---------------- */
+async function updateEvidenceBadge() {
+  const lastSeen = CURRENT_PROFILE.lastSeenEvidenceAt ? CURRENT_PROFILE.lastSeenEvidenceAt.toMillis() : 0;
+  const newCount = ALL_EVIDENCES.filter((e) => e.createdAt && e.createdAt.toMillis() > lastSeen).length;
+  const badge = document.getElementById("newEvidenceBadge");
+  if (newCount > 0) {
+    badge.textContent = newCount > 99 ? "99+" : newCount;
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+async function markEvidenceAsSeen() {
+  const badge = document.getElementById("newEvidenceBadge");
+  if (badge.style.display === "none") return;
+  badge.style.display = "none";
+  await db.collection("users").doc(CURRENT_PROFILE.uid).update({
+    lastSeenEvidenceAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+  CURRENT_PROFILE.lastSeenEvidenceAt = { toMillis: () => Date.now() };
 }
 
 function weightedPct(completedIds) {
@@ -365,10 +444,13 @@ function deleteTeacher(uid, name) {
 }
 
 /* ---------------- عرض شواهد معلم معيّن (الروابط المضافة) ---------------- */
+let EVIDENCE_MODAL_TEACHER = null;
+
 function showTeacherEvidences(uid, name) {
   const overlay = document.getElementById("evidenceModalOverlay");
   const body = document.getElementById("evidenceModalBody");
   document.getElementById("evidenceModalTitle").textContent = `شواهد المعلم: ${name}`;
+  EVIDENCE_MODAL_TEACHER = TEACHERS_CACHE.find((t) => t.uid === uid);
 
   const evs = ALL_EVIDENCES.filter((e) => e.teacherUid === uid);
 
@@ -416,7 +498,122 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("evidenceModalOverlay")?.addEventListener("click", (e) => {
     if (e.target.id === "evidenceModalOverlay") e.currentTarget.classList.remove("show");
   });
+  document.getElementById("evidenceModalPrint")?.addEventListener("click", () => {
+    if (!EVIDENCE_MODAL_TEACHER) return;
+    const evs = ALL_EVIDENCES.filter((e) => e.teacherUid === EVIDENCE_MODAL_TEACHER.uid);
+    printTeacherReport(EVIDENCE_MODAL_TEACHER, ELEMENTS_CACHE, evs);
+  });
+
+  // نافذة ملاحظة المدير
+  document.getElementById("noteCancel")?.addEventListener("click", () => {
+    document.getElementById("noteModalOverlay").classList.remove("show");
+  });
+  document.getElementById("noteModalOverlay")?.addEventListener("click", (e) => {
+    if (e.target.id === "noteModalOverlay") e.currentTarget.classList.remove("show");
+  });
+  document.getElementById("noteSave")?.addEventListener("click", saveTeacherNote);
 });
+
+let NOTE_MODAL_UID = null;
+function openNoteModal(uid, name) {
+  NOTE_MODAL_UID = uid;
+  const teacher = TEACHERS_CACHE.find((t) => t.uid === uid);
+  document.getElementById("noteModalTitle").textContent = `ملاحظة للمعلم: ${name}`;
+  document.getElementById("noteText").value = teacher?.adminNote || "";
+  hideMsg(document.getElementById("noteMsg"));
+  document.getElementById("noteModalOverlay").classList.add("show");
+}
+
+async function saveTeacherNote() {
+  const msg = document.getElementById("noteMsg");
+  const text = document.getElementById("noteText").value.trim();
+  try {
+    await db.collection("users").doc(NOTE_MODAL_UID).update({ adminNote: text });
+    const teacher = TEACHERS_CACHE.find((t) => t.uid === NOTE_MODAL_UID);
+    if (teacher) teacher.adminNote = text;
+    showMsg(msg, "تم حفظ الملاحظة بنجاح.", "success");
+    renderTeachersTable();
+    setTimeout(() => document.getElementById("noteModalOverlay").classList.remove("show"), 700);
+  } catch (err) {
+    console.error(err);
+    showMsg(msg, "تعذّر حفظ الملاحظة.", "error");
+  }
+}
+
+/* ---------------- شعار الموقع ---------------- */
+async function loadCurrentLogoPreview() {
+  try {
+    const doc = await db.collection("meta").doc("branding").get();
+    if (doc.exists && doc.data().logoDataUrl) {
+      document.getElementById("logoPreview").src = doc.data().logoDataUrl;
+    }
+  } catch (err) { console.error(err); }
+}
+
+function setupLogoUpload() {
+  const input = document.getElementById("logoInput");
+  const saveBtn = document.getElementById("logoSaveBtn");
+  const resetBtn = document.getElementById("logoResetBtn");
+  const preview = document.getElementById("logoPreview");
+  const msg = document.getElementById("logoMsg");
+  let pendingDataUrl = null;
+
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // تصغير الصورة لتبقى خفيفة (أقصى ارتفاع 140px) قبل الحفظ في قاعدة البيانات
+        const maxH = 140;
+        const scale = Math.min(1, maxH / img.height);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        pendingDataUrl = canvas.toDataURL("image/png");
+        preview.src = pendingDataUrl;
+        saveBtn.disabled = false;
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    if (!pendingDataUrl) return;
+    hideMsg(msg);
+    saveBtn.disabled = true;
+    saveBtn.textContent = "جارٍ الحفظ...";
+    try {
+      await db.collection("meta").doc("branding").set({ logoDataUrl: pendingDataUrl });
+      document.querySelectorAll("#headerLogoImg").forEach((img) => (img.src = pendingDataUrl));
+      showMsg(msg, "تم حفظ الشعار الجديد، وسيظهر لجميع المستخدمين فوراً.", "success");
+    } catch (err) {
+      console.error(err);
+      showMsg(msg, "تعذّر حفظ الشعار، حاول مرة أخرى.", "error");
+    } finally {
+      saveBtn.textContent = "حفظ الشعار الجديد";
+    }
+  });
+
+  resetBtn.addEventListener("click", () => {
+    confirmAction("استعادة الشعار الافتراضي", "سيعود شعار الموقع للشعار الافتراضي لدى جميع المستخدمين. هل تريد المتابعة؟", async () => {
+      try {
+        await db.collection("meta").doc("branding").delete();
+        preview.src = "assets/logo.png";
+        pendingDataUrl = null;
+        saveBtn.disabled = true;
+        document.querySelectorAll("#headerLogoImg").forEach((img) => (img.src = "assets/logo.png"));
+        showMsg(msg, "تمت استعادة الشعار الافتراضي.", "success");
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  });
+}
 function setupAccountForms() {
   const uForm = document.getElementById("usernameForm");
   const uMsg = document.getElementById("usernameMsg");

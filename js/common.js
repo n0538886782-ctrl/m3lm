@@ -139,6 +139,99 @@ async function changePassword(currentPassword, newPassword) {
 }
 
 // أزرار تبديل الأقسام في القوائم الجانبية للأجهزة الصغيرة (اختياري بسيط)
+/* ---------- الوضع الفاتح / الداكن ---------- */
+function initTheme() {
+  const saved = localStorage.getItem("evalSystemTheme") || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+  updateThemeToggleIcon(saved);
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", current);
+  localStorage.setItem("evalSystemTheme", current);
+  updateThemeToggleIcon(current);
+}
+function updateThemeToggleIcon(theme) {
+  document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+    btn.innerHTML = theme === "light"
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>الوضع الداكن</span>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>الوضع الفاتح</span>';
+  });
+}
+initTheme();
+
+/* ---------- تطبيق الشعار المخصص (إن وجد) على كل الصفحات ---------- */
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const doc = await db.collection("meta").doc("branding").get();
+    if (doc.exists && doc.data().logoDataUrl) {
+      document.querySelectorAll("#headerLogoImg").forEach((img) => (img.src = doc.data().logoDataUrl));
+    }
+  } catch (err) {
+    // تجاهل بصمت إن تعذّر الجلب
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-theme-toggle]")) toggleTheme();
+});
+
+/* ---------- طباعة / تصدير تقرير أداء معلم كملف PDF عبر الطباعة ---------- */
+function printTeacherReport(profile, elements, evidences) {
+  const totalWeight = elements.reduce((s, e) => s + (Number(e.weight) || 0), 0) || 100;
+  const completedIds = new Set(evidences.map((e) => e.elementId));
+  const doneWeight = elements.filter((e) => completedIds.has(e.id)).reduce((s, e) => s + (Number(e.weight) || 0), 0);
+  const pct = elements.length ? Math.round((doneWeight / totalWeight) * 100) : 0;
+  const today = new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+
+  const rows = elements.map((el) => {
+    const evs = evidences.filter((e) => e.elementId === el.id);
+    const links = evs.length
+      ? evs.map((e) => `<div class="pr-link">• ${escapeHtml(e.note || e.url)}</div>`).join("")
+      : `<span class="pr-empty">لا يوجد</span>`;
+    return `
+      <tr>
+        <td>${escapeHtml(el.title)}</td>
+        <td>${el.weight}%</td>
+        <td>${evs.length ? "مكتمل ✓" : "لم يبدأ"}</td>
+        <td>${links}</td>
+      </tr>`;
+  }).join("");
+
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تقرير أداء ${escapeHtml(profile.name)}</title>
+    <style>
+      body{font-family:Tajawal,Arial,sans-serif; padding:32px; color:#0c1740; direction:rtl;}
+      h1{font-size:20px; margin-bottom:2px;}
+      .sub{color:#555; font-size:13px; margin-bottom:18px;}
+      .meta{display:flex; gap:24px; margin-bottom:20px; font-size:13px;}
+      .meta b{display:block; font-size:16px;}
+      table{width:100%; border-collapse:collapse; font-size:12.5px;}
+      th,td{border:1px solid #ccc; padding:8px 10px; text-align:right; vertical-align:top;}
+      th{background:#f0f2fa;}
+      .pr-link{margin-bottom:3px;}
+      .pr-empty{color:#999;}
+      .header-schools{font-weight:800; font-size:14px; margin-bottom:2px;}
+    </style></head><body>
+      <div class="header-schools">متوسطة أبي بن كعب | ابتدائية عروة بن الزبير</div>
+      <div class="sub">وزارة التعليم — المملكة العربية السعودية</div>
+      <h1>تقرير أداء المعلم: ${escapeHtml(profile.name)}</h1>
+      <div class="sub">اسم المستخدم: ${escapeHtml(profile.username)} — تاريخ التصدير: ${today}</div>
+      <div class="meta">
+        <div><b>${pct}%</b>نسبة الإنجاز الإجمالية</div>
+        <div><b>${elements.filter((e) => completedIds.has(e.id)).length} / ${elements.length}</b>عناصر مكتملة</div>
+      </div>
+      <table>
+        <thead><tr><th>عنصر الأداء الوظيفي</th><th>الوزن</th><th>الحالة</th><th>الشواهد</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </body></html>
+  `);
+  win.document.close();
+  setTimeout(() => win.print(), 400);
+}
+
 document.addEventListener("click", (e) => {
   const trigger = e.target.closest("[data-logout]");
   if (trigger) logout();

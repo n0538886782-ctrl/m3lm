@@ -27,7 +27,7 @@
       <small>Ministry of Education</small>
     </div>
     <div class="gov-header-logo-badge">
-      <img src="assets/logo.png" alt="شعار وزارة التعليم" />
+      <img src="assets/logo.png" alt="شعار وزارة التعليم" id="headerLogoImg" />
     </div>
   </div>
 </header>
@@ -54,6 +54,7 @@
     </nav>
 
     <div class="sidebar-foot">
+      <button class="theme-toggle-btn" data-theme-toggle></button>
       <div class="user-chip">
         <div class="user-avatar" id="tAvatar">؟</div>
         <div class="user-chip-info">
@@ -73,7 +74,10 @@
           <h1 class="page-title">ملف الأداء الوظيفي</h1>
           <p class="page-sub">أضف شواهدك تحت كل عنصر من عناصر الأداء الوظيفي</p>
         </div>
+        <button class="btn btn-ghost btn-sm" id="exportReportBtn">تصدير تقرير الأداء</button>
       </div>
+
+      <div id="adminNoteWrap"></div>
 
       <div class="panel" style="margin-bottom:22px">
         <div class="progress-hero">

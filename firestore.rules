@@ -21,6 +21,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // شعار الموقع المخصص (يقرؤه الجميع، ويعدّله المدير فقط)
+    match /meta/branding {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /users/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
 

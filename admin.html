@@ -27,7 +27,7 @@
       <small>Ministry of Education</small>
     </div>
     <div class="gov-header-logo-badge">
-      <img src="assets/logo.png" alt="شعار وزارة التعليم" />
+      <img src="assets/logo.png" alt="شعار وزارة التعليم" id="headerLogoImg" />
     </div>
   </div>
 </header>
@@ -49,7 +49,7 @@
     <nav class="sidebar-nav">
       <div class="nav-group-label">القوائم</div>
       <button class="nav-link active" data-section="overview"><span class="dot"></span> نظرة عامة</button>
-      <button class="nav-link" data-section="teachers"><span class="dot"></span> إدارة المعلمين</button>
+      <button class="nav-link" data-section="teachers"><span class="dot"></span> إدارة المعلمين <span class="nav-badge" id="newEvidenceBadge" style="display:none">0</span></button>
       <button class="nav-link" data-section="elements"><span class="dot"></span> عناصر التقييم</button>
       <div class="nav-group-label">الحساب</div>
       <button class="nav-link" data-section="account"><span class="dot"></span> إعدادات الحساب</button>
@@ -57,6 +57,7 @@
     </nav>
 
     <div class="sidebar-foot">
+      <button class="theme-toggle-btn" data-theme-toggle></button>
       <div class="user-chip">
         <div class="user-avatar" id="adminAvatar">؟</div>
         <div class="user-chip-info">
@@ -92,6 +93,12 @@
           <div class="stat-label">متوسط نسبة الإنجاز</div>
           <div class="stat-value" id="statAvg">0%</div>
         </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <h2 class="panel-title">مقارنة أداء المعلمين</h2>
+        <p class="panel-sub">نسبة الإنجاز الموزونة لكل معلم، مرتّبة من الأعلى إلى الأقل</p>
+        <div id="chartWrap" class="chart-bars"></div>
       </div>
 
       <div class="panel">
@@ -141,6 +148,14 @@
 
       <div class="panel">
         <h2 class="panel-title">قائمة المعلمين</h2>
+        <div class="list-toolbar">
+          <input type="text" id="teacherSearch" placeholder="ابحث بالاسم أو اسم المستخدم..." />
+          <select id="teacherSort">
+            <option value="name">ترتيب: الاسم</option>
+            <option value="pct-desc">ترتيب: الأعلى إنجازاً</option>
+            <option value="pct-asc">ترتيب: الأقل إنجازاً</option>
+          </select>
+        </div>
         <div id="teachersTableWrap"><div class="loader"></div></div>
       </div>
     </section>
@@ -224,9 +239,43 @@
           </form>
         </div>
       </div>
+
+      <div class="panel" style="margin-top:20px">
+        <h2 class="panel-title">شعار الموقع</h2>
+        <p class="panel-sub">اختر شعاراً مخصصاً يظهر في أعلى جميع صفحات الموقع بدلاً من الشعار الحالي (صورة PNG أو JPG، يُفضّل خلفية بيضاء أو شفافة)</p>
+        <div id="logoMsg" class="form-msg"></div>
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap">
+          <div style="background:#fff; border-radius:14px; padding:10px 16px; display:flex; align-items:center">
+            <img id="logoPreview" src="assets/logo.png" alt="معاينة الشعار" style="height:50px; width:auto; display:block" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <input type="file" id="logoInput" accept="image/png,image/jpeg,image/webp" />
+            <div style="display:flex; gap:8px">
+              <button type="button" id="logoSaveBtn" class="btn btn-primary btn-sm" disabled>حفظ الشعار الجديد</button>
+              <button type="button" id="logoResetBtn" class="btn btn-ghost btn-sm">استعادة الشعار الافتراضي</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>
+</div>
+
+<!-- نافذة ملاحظة المدير للمعلم -->
+<div class="modal-overlay" id="noteModalOverlay">
+  <div class="modal">
+    <h3 class="modal-title" id="noteModalTitle">ملاحظة للمعلم</h3>
+    <p class="modal-sub">تظهر هذه الملاحظة أعلى صفحة المعلم. اتركها فارغة لإخفائها.</p>
+    <div id="noteMsg" class="form-msg"></div>
+    <div class="field">
+      <textarea id="noteText" rows="4" style="width:100%; padding:12px; border-radius:9px; border:1px solid var(--panel-border); background:rgba(255,255,255,0.04); color:var(--text-1); font-family:inherit; font-size:13.5px; resize:vertical"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="noteCancel">إلغاء</button>
+      <button class="btn btn-primary" id="noteSave">حفظ الملاحظة</button>
+    </div>
+  </div>
 </div>
 
 <!-- نافذة عرض شواهد المعلم -->
@@ -234,7 +283,10 @@
   <div class="modal modal-lg">
     <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:6px">
       <h3 class="modal-title" id="evidenceModalTitle">شواهد المعلم</h3>
-      <button class="btn btn-ghost btn-sm" id="evidenceModalClose">إغلاق</button>
+      <div style="display:flex; gap:8px">
+        <button class="btn btn-ghost btn-sm" id="evidenceModalPrint">تصدير التقرير</button>
+        <button class="btn btn-ghost btn-sm" id="evidenceModalClose">إغلاق</button>
+      </div>
     </div>
     <p class="modal-sub">الروابط التي أضافها المعلم تحت كل عنصر من عناصر الأداء الوظيفي</p>
     <div id="evidenceModalBody" style="max-height:60vh; overflow-y:auto"></div>

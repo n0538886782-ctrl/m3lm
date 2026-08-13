@@ -37,6 +37,33 @@
   --font-data:'IBM Plex Sans Arabic', 'Tajawal', sans-serif;
 }
 
+/* ---------- الوضع الفاتح ---------- */
+[data-theme="light"]{
+  --bg-deep:#eef1fb;
+  --bg-royal-1:#eef2fb;
+  --bg-royal-2:#dce3fa;
+  --bg-royal-3:#c7d6fa;
+  --panel:rgba(255,255,255,0.72);
+  --panel-solid:#ffffff;
+  --panel-border:rgba(20,30,70,0.12);
+  --glass-highlight:rgba(0,0,0,0.02);
+  --text-1:#0c1740;
+  --text-2:#4a5588;
+  --text-3:#8088ac;
+}
+[data-theme="light"] body{
+  background-color:#eef1fb;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(31,216,196,0.14), transparent 40%),
+    linear-gradient(165deg, #eef2fb, #dce3fa 55%, #c9d8fb);
+}
+[data-theme="light"] body::before{
+  background-image:radial-gradient(rgba(12,23,64,0.07) 1px, transparent 1.4px);
+  mix-blend-mode:normal;
+}
+[data-theme="light"] .element-num{color:var(--text-2);}
+[data-theme="light"] ::selection{color:#04211d;}
+
 *{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{
@@ -587,6 +614,55 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
 
 .link-inline{color:var(--accent-teal); font-weight:600; text-decoration:none; font-size:13px;}
 .link-inline:hover{text-decoration:underline;}
+
+/* ---------- زر تبديل الوضع الفاتح/الداكن ---------- */
+.theme-toggle-btn{
+  display:flex; align-items:center; gap:8px; width:100%;
+  padding:10px 12px; border-radius:11px; margin-bottom:6px;
+  background:rgba(255,255,255,0.04); border:1px solid var(--panel-border);
+  color:var(--text-2); font-size:12.5px; font-weight:600;
+}
+.theme-toggle-btn:hover{background:rgba(255,255,255,0.08); color:var(--text-1);}
+
+/* ---------- شارة الإشعارات (شواهد جديدة) ---------- */
+.nav-badge{
+  margin-inline-start:auto;
+  background:var(--danger); color:#fff;
+  font-size:10.5px; font-weight:700;
+  min-width:18px; height:18px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; padding:0 5px;
+}
+
+/* ---------- بانر ملاحظة المدير في صفحة المعلم ---------- */
+.admin-note-banner{
+  display:flex; align-items:flex-start; gap:12px;
+  background:rgba(232,185,95,0.1); border:1px solid rgba(232,185,95,0.3);
+  border-radius:var(--radius-md); padding:14px 16px; margin-bottom:20px;
+}
+.admin-note-banner .icon{font-size:18px; flex-shrink:0;}
+.admin-note-banner strong{display:block; font-size:12.5px; color:var(--accent-gold); margin-bottom:3px;}
+.admin-note-banner p{margin:0; font-size:13.5px; color:var(--text-1); line-height:1.7;}
+
+/* ---------- رسم بياني بسيط (مقارنة أداء المعلمين) ---------- */
+.chart-bars{display:flex; flex-direction:column; gap:12px;}
+.chart-bar-row{display:flex; align-items:center; gap:12px;}
+.chart-bar-label{width:120px; flex-shrink:0; font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.chart-bar-track{flex:1; height:16px; border-radius:8px; background:rgba(255,255,255,0.06); overflow:hidden; border:1px solid var(--panel-border);}
+.chart-bar-fill{height:100%; border-radius:8px; background:linear-gradient(90deg, var(--accent-teal-dim), var(--accent-teal)); transition:width .8s cubic-bezier(.4,0,.2,1);}
+.chart-bar-pct{width:40px; flex-shrink:0; font-family:var(--font-data); font-size:12px; font-weight:600; text-align:left;}
+
+/* ---------- بحث وترتيب قائمة المعلمين ---------- */
+.list-toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+.list-toolbar input, .list-toolbar select{
+  padding:9px 12px; font-size:13px; border-radius:9px;
+  border:1px solid var(--panel-border); background:rgba(255,255,255,0.04); color:var(--text-1);
+}
+.list-toolbar input{flex:1; min-width:160px;}
+
+/* ---------- إخفاء المحتوى عند الطباعة (يُفتح التقرير في تبويب منفصل بالفعل) ---------- */
+@media print{
+  .sidebar, .mobile-menu-btn{display:none !important;}
+}
 
 .divider{height:1px; background:var(--panel-border); margin:20px 0;}
 
