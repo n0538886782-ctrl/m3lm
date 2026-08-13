@@ -32,6 +32,7 @@ function initials(name) {
 
 function evidenceIcon(type) {
   if (type === "image") return "🖼️";
+  if (type === "video") return "🎬";
   if (type === "link") return "🔗";
   return "📄";
 }

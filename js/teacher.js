@@ -130,9 +130,20 @@ function renderElements() {
         </div>
 
         <form class="evidence-form" data-form>
-          <div class="field" data-field-url style="flex:2">
-            <label>رابط الشاهد (من Google Drive أو أي تخزين سحابي)</label>
-            <input type="url" placeholder="https://drive.google.com/..." data-url required />
+          <div class="field field-type">
+            <label>طريقة الإضافة</label>
+            <select data-mode>
+              <option value="drive">رفع ملف (يُحفظ في Google Drive تلقائياً)</option>
+              <option value="link">لصق رابط جاهز</option>
+            </select>
+          </div>
+          <div class="field" data-field-file style="flex:2">
+            <label>اختر صورة أو ملف أو فيديو من جهازك</label>
+            <input type="file" data-file />
+          </div>
+          <div class="field" data-field-url style="flex:2; display:none">
+            <label>الرابط</label>
+            <input type="url" placeholder="https://" data-url />
           </div>
           <div class="field">
             <label>وصف مختصر (اختياري)</label>
@@ -146,6 +157,16 @@ function renderElements() {
 
     // فتح/طي البطاقة
     card.querySelector("[data-toggle]").addEventListener("click", () => card.classList.toggle("open"));
+
+    // تبديل بين رفع ملف / لصق رابط
+    const modeSelect = card.querySelector("[data-mode]");
+    const fileField = card.querySelector("[data-field-file]");
+    const urlField = card.querySelector("[data-field-url]");
+    modeSelect.addEventListener("change", () => {
+      const isDrive = modeSelect.value === "drive";
+      fileField.style.display = isDrive ? "" : "none";
+      urlField.style.display = isDrive ? "none" : "";
+    });
 
     // إضافة شاهد
     card.querySelector("[data-form]").addEventListener("submit", (e) => handleAddEvidence(e, el, card));
@@ -161,21 +182,36 @@ async function handleAddEvidence(e, el, card) {
   e.preventDefault();
   const form = e.target;
   const submitBtn = form.querySelector("button[type=submit]");
+  const mode = form.querySelector("[data-mode]").value;
   const note = form.querySelector("[data-note]").value.trim();
   const urlInput = form.querySelector("[data-url]");
+  const fileInput = form.querySelector("[data-file]");
 
   submitBtn.disabled = true;
-  submitBtn.textContent = "جارٍ الإضافة...";
 
   try {
-    const url = urlInput.value.trim();
-    if (!url) throw new Error("أدخل رابطاً صحيحاً");
+    let url, fileName = null, type = "link";
+
+    if (mode === "drive") {
+      const file = fileInput.files[0];
+      if (!file) throw new Error("اختر ملفاً أولاً");
+      if (file.size > 80 * 1024 * 1024) throw new Error("حجم الملف يجب ألا يتجاوز 80 ميجابايت");
+      submitBtn.textContent = "جارٍ الرفع إلى Drive...";
+      const result = await uploadFileToDrive(file);
+      url = result.url;
+      fileName = file.name;
+      type = file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : "file";
+    } else {
+      url = urlInput.value.trim();
+      if (!url) throw new Error("أدخل رابطاً صحيحاً");
+      submitBtn.textContent = "جارٍ الإضافة...";
+    }
 
     await db.collection("evidences").add({
       teacherUid: PROFILE.uid,
       teacherUsername: PROFILE.username,
       elementId: el.id,
-      type: "link", url, fileName: null, note,
+      type, url, fileName, note,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
