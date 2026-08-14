@@ -27,10 +27,12 @@
       <small>Ministry of Education</small>
     </div>
     <div class="gov-header-logo-badge">
-      <img src="assets/logo.png" alt="شعار وزارة التعليم" id="headerLogoImg" />
+      <img src="assets/logo.png" alt="شعار وزارة التعليم" />
     </div>
   </div>
 </header>
+
+<div class="site-banner" id="siteBannerWrap"></div>
 
 <div class="app-shell">
   <!-- الشريط الجانبي -->
@@ -241,20 +243,34 @@
       </div>
 
       <div class="panel" style="margin-top:20px">
-        <h2 class="panel-title">شعار الموقع</h2>
-        <p class="panel-sub">اختر شعاراً مخصصاً يظهر في أعلى جميع صفحات الموقع بدلاً من الشعار الحالي (صورة PNG أو JPG، يُفضّل خلفية بيضاء أو شفافة)</p>
-        <div id="logoMsg" class="form-msg"></div>
-        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap">
-          <div style="background:#fff; border-radius:14px; padding:10px 16px; display:flex; align-items:center">
-            <img id="logoPreview" src="assets/logo.png" alt="معاينة الشعار" style="height:50px; width:auto; display:block" />
+        <h2 class="panel-title">الصورة والعبارة أسفل الترويسة</h2>
+        <p class="panel-sub">صورة أو شعار يظهر أسفل الترويسة الرسمية في كل صفحات الموقع، يمكنك تغييره بين فترة وأخرى</p>
+        <div id="bannerMsg" class="form-msg"></div>
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:22px">
+          <div id="bannerPreviewWrap" style="background:rgba(255,255,255,0.05); border:1px dashed var(--panel-border); border-radius:14px; padding:10px 16px; display:flex; align-items:center; min-height:60px; min-width:140px">
+            <img id="bannerPreview" src="" alt="معاينة الصورة" style="max-height:60px; max-width:220px; display:none" />
+            <span id="bannerPreviewEmpty" style="color:var(--text-3); font-size:12.5px">لا توجد صورة حالياً</span>
           </div>
           <div style="display:flex; flex-direction:column; gap:8px">
-            <input type="file" id="logoInput" accept="image/png,image/jpeg,image/webp" />
+            <input type="file" id="bannerInput" accept="image/png,image/jpeg,image/webp" />
             <div style="display:flex; gap:8px">
-              <button type="button" id="logoSaveBtn" class="btn btn-primary btn-sm" disabled>حفظ الشعار الجديد</button>
-              <button type="button" id="logoResetBtn" class="btn btn-ghost btn-sm">استعادة الشعار الافتراضي</button>
+              <button type="button" id="bannerSaveBtn" class="btn btn-primary btn-sm" disabled>حفظ الصورة</button>
+              <button type="button" id="bannerResetBtn" class="btn btn-ghost btn-sm">إزالة الصورة</button>
             </div>
           </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <p class="panel-sub" style="margin-top:16px">العبارة المتحركة التي تظهر كشريط تمرير في صفحة المعلمين</p>
+        <div id="tickerMsg" class="form-msg"></div>
+        <div class="field">
+          <label for="tickerInput">نص العبارة</label>
+          <input type="text" id="tickerInput" placeholder="مثال: نتمنى لجميع المعلمين عاماً دراسياً موفقاً" />
+        </div>
+        <div style="display:flex; gap:8px">
+          <button type="button" id="tickerSaveBtn" class="btn btn-primary btn-sm">حفظ العبارة</button>
+          <button type="button" id="tickerResetBtn" class="btn btn-ghost btn-sm">إزالة العبارة</button>
         </div>
       </div>
     </section>

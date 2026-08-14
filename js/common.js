@@ -161,12 +161,27 @@ function updateThemeToggleIcon(theme) {
 }
 initTheme();
 
-/* ---------- تطبيق الشعار المخصص (إن وجد) على كل الصفحات ---------- */
+/* ---------- تطبيق الصورة والعبارة أسفل الترويسة (إن وُجدتا) على كل الصفحات ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     const doc = await db.collection("meta").doc("branding").get();
-    if (doc.exists && doc.data().logoDataUrl) {
-      document.querySelectorAll("#headerLogoImg").forEach((img) => (img.src = doc.data().logoDataUrl));
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    const bannerWrap = document.getElementById("siteBannerWrap");
+    if (bannerWrap && data.bannerDataUrl) {
+      bannerWrap.innerHTML = `<img src="${data.bannerDataUrl}" alt="صورة الموقع" />`;
+    }
+
+    const tickerWrap = document.getElementById("tickerWrap");
+    if (tickerWrap) {
+      if (data.tickerText && data.tickerText.trim()) {
+        const text = escapeHtml(data.tickerText.trim());
+        tickerWrap.innerHTML = `<span class="ticker-track">${text}&nbsp;&nbsp;•&nbsp;&nbsp;${text}&nbsp;&nbsp;•&nbsp;&nbsp;${text}</span>`;
+        tickerWrap.style.display = "";
+      } else {
+        tickerWrap.style.display = "none";
+      }
     }
   } catch (err) {
     // تجاهل بصمت إن تعذّر الجلب

@@ -32,13 +32,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setupTeacherForm();
     setupElementForm();
     setupAccountForms();
-    setupLogoUpload();
+    setupBannerAndTicker();
     setupListToolbar();
     document.getElementById("seedBtn").addEventListener("click", seedDefaultElements);
 
     loadElements();
     loadTeachersAndProgress();
-    loadCurrentLogoPreview();
+    loadCurrentBrandingPreview();
   });
 });
 
@@ -540,22 +540,30 @@ async function saveTeacherNote() {
   }
 }
 
-/* ---------------- شعار الموقع ---------------- */
-async function loadCurrentLogoPreview() {
+/* ---------------- الصورة والعبارة أسفل الترويسة ---------------- */
+async function loadCurrentBrandingPreview() {
   try {
     const doc = await db.collection("meta").doc("branding").get();
-    if (doc.exists && doc.data().logoDataUrl) {
-      document.getElementById("logoPreview").src = doc.data().logoDataUrl;
+    if (!doc.exists) return;
+    const data = doc.data();
+    if (data.bannerDataUrl) {
+      document.getElementById("bannerPreview").src = data.bannerDataUrl;
+      document.getElementById("bannerPreview").style.display = "block";
+      document.getElementById("bannerPreviewEmpty").style.display = "none";
+    }
+    if (data.tickerText) {
+      document.getElementById("tickerInput").value = data.tickerText;
     }
   } catch (err) { console.error(err); }
 }
 
-function setupLogoUpload() {
-  const input = document.getElementById("logoInput");
-  const saveBtn = document.getElementById("logoSaveBtn");
-  const resetBtn = document.getElementById("logoResetBtn");
-  const preview = document.getElementById("logoPreview");
-  const msg = document.getElementById("logoMsg");
+function setupBannerAndTicker() {
+  const input = document.getElementById("bannerInput");
+  const saveBtn = document.getElementById("bannerSaveBtn");
+  const resetBtn = document.getElementById("bannerResetBtn");
+  const preview = document.getElementById("bannerPreview");
+  const previewEmpty = document.getElementById("bannerPreviewEmpty");
+  const msg = document.getElementById("bannerMsg");
   let pendingDataUrl = null;
 
   input.addEventListener("change", () => {
@@ -565,9 +573,9 @@ function setupLogoUpload() {
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        // تصغير الصورة لتبقى خفيفة (أقصى ارتفاع 140px) قبل الحفظ في قاعدة البيانات
-        const maxH = 140;
-        const scale = Math.min(1, maxH / img.height);
+        // تصغير الصورة لتبقى خفيفة (أقصى عرض 900px) قبل الحفظ في قاعدة البيانات
+        const maxW = 900;
+        const scale = Math.min(1, maxW / img.width);
         const canvas = document.createElement("canvas");
         canvas.width = img.width * scale;
         canvas.height = img.height * scale;
@@ -575,6 +583,8 @@ function setupLogoUpload() {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         pendingDataUrl = canvas.toDataURL("image/png");
         preview.src = pendingDataUrl;
+        preview.style.display = "block";
+        previewEmpty.style.display = "none";
         saveBtn.disabled = false;
       };
       img.src = reader.result;
@@ -588,32 +598,59 @@ function setupLogoUpload() {
     saveBtn.disabled = true;
     saveBtn.textContent = "جارٍ الحفظ...";
     try {
-      await db.collection("meta").doc("branding").set({ logoDataUrl: pendingDataUrl });
-      document.querySelectorAll("#headerLogoImg").forEach((img) => (img.src = pendingDataUrl));
-      showMsg(msg, "تم حفظ الشعار الجديد، وسيظهر لجميع المستخدمين فوراً.", "success");
+      await db.collection("meta").doc("branding").set({ bannerDataUrl: pendingDataUrl }, { merge: true });
+      showMsg(msg, "تم حفظ الصورة، وستظهر لجميع المستخدمين فوراً أسفل الترويسة.", "success");
     } catch (err) {
       console.error(err);
-      showMsg(msg, "تعذّر حفظ الشعار، حاول مرة أخرى.", "error");
+      showMsg(msg, "تعذّر حفظ الصورة، حاول مرة أخرى.", "error");
     } finally {
-      saveBtn.textContent = "حفظ الشعار الجديد";
+      saveBtn.textContent = "حفظ الصورة";
     }
   });
 
   resetBtn.addEventListener("click", () => {
-    confirmAction("استعادة الشعار الافتراضي", "سيعود شعار الموقع للشعار الافتراضي لدى جميع المستخدمين. هل تريد المتابعة؟", async () => {
+    confirmAction("إزالة الصورة", "ستُحذف الصورة الظاهرة أسفل الترويسة لدى جميع المستخدمين. هل تريد المتابعة؟", async () => {
       try {
-        await db.collection("meta").doc("branding").delete();
-        preview.src = "assets/logo.png";
+        await db.collection("meta").doc("branding").set({ bannerDataUrl: firebase.firestore.FieldValue.delete() }, { merge: true });
+        preview.style.display = "none";
+        previewEmpty.style.display = "block";
         pendingDataUrl = null;
         saveBtn.disabled = true;
-        document.querySelectorAll("#headerLogoImg").forEach((img) => (img.src = "assets/logo.png"));
-        showMsg(msg, "تمت استعادة الشعار الافتراضي.", "success");
+        input.value = "";
+        showMsg(msg, "تمت إزالة الصورة.", "success");
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  });
+
+  const tickerInput = document.getElementById("tickerInput");
+  const tickerMsg = document.getElementById("tickerMsg");
+  document.getElementById("tickerSaveBtn").addEventListener("click", async () => {
+    hideMsg(tickerMsg);
+    const text = tickerInput.value.trim();
+    try {
+      await db.collection("meta").doc("branding").set({ tickerText: text }, { merge: true });
+      showMsg(tickerMsg, "تم حفظ العبارة، وستظهر في صفحة المعلمين فوراً.", "success");
+    } catch (err) {
+      console.error(err);
+      showMsg(tickerMsg, "تعذّر حفظ العبارة، حاول مرة أخرى.", "error");
+    }
+  });
+
+  document.getElementById("tickerResetBtn").addEventListener("click", () => {
+    confirmAction("إزالة العبارة", "ستختفي العبارة المتحركة من صفحة المعلمين. هل تريد المتابعة؟", async () => {
+      try {
+        await db.collection("meta").doc("branding").set({ tickerText: firebase.firestore.FieldValue.delete() }, { merge: true });
+        tickerInput.value = "";
+        showMsg(tickerMsg, "تمت إزالة العبارة.", "success");
       } catch (err) {
         console.error(err);
       }
     });
   });
 }
+
 function setupAccountForms() {
   const uForm = document.getElementById("usernameForm");
   const uMsg = document.getElementById("usernameMsg");

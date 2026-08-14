@@ -671,3 +671,38 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
   color:var(--text-2); background:rgba(255,255,255,0.06);
   padding:3px 9px; border-radius:8px;
 }
+
+/* ---------- الصورة أسفل الترويسة ---------- */
+.site-banner{
+  max-width:1180px; margin:16px auto 0; padding:0 24px;
+}
+.site-banner:empty{display:none;}
+.site-banner img{
+  width:100%; max-height:220px; object-fit:contain;
+  border-radius:var(--radius-md);
+  display:block;
+  background:rgba(255,255,255,0.03);
+}
+
+/* ---------- شريط العبارة المتحركة ---------- */
+.ticker-bar{
+  background:rgba(31,216,196,0.08);
+  border-top:1px solid var(--panel-border);
+  border-bottom:1px solid var(--panel-border);
+  overflow:hidden;
+  white-space:nowrap;
+  padding:9px 0;
+  margin-top:16px;
+}
+.ticker-bar .ticker-track{
+  display:inline-block;
+  padding-inline-start:100%;
+  animation:ticker-scroll 24s linear infinite;
+  color:var(--accent-teal);
+  font-weight:600;
+  font-size:13.5px;
+}
+@keyframes ticker-scroll{
+  from{transform:translateX(0);}
+  to{transform:translateX(-100%);}
+}
