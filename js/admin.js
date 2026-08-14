@@ -573,15 +573,24 @@ function setupBannerAndTicker() {
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        // تصغير الصورة لتبقى خفيفة (أقصى عرض 900px) قبل الحفظ في قاعدة البيانات
-        const maxW = 900;
+        // تصغير الصورة وضغطها لتبقى أصغر بكثير من الحد الأقصى لحجم مستند قاعدة البيانات (1 ميجابايت)
+        const maxW = 480;
         const scale = Math.min(1, maxW / img.width);
         const canvas = document.createElement("canvas");
         canvas.width = img.width * scale;
         canvas.height = img.height * scale;
         const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        pendingDataUrl = canvas.toDataURL("image/png");
+        pendingDataUrl = canvas.toDataURL("image/jpeg", 0.78);
+
+        if (pendingDataUrl.length > 700 * 1024) {
+          showMsg(msg, "الصورة كبيرة جداً حتى بعد الضغط، جرّب صورة أبسط أو أصغر أبعاداً.", "error");
+          saveBtn.disabled = true;
+          return;
+        }
+        hideMsg(msg);
         preview.src = pendingDataUrl;
         preview.style.display = "block";
         previewEmpty.style.display = "none";
@@ -602,7 +611,7 @@ function setupBannerAndTicker() {
       showMsg(msg, "تم حفظ الصورة، وستظهر لجميع المستخدمين فوراً أسفل الترويسة.", "success");
     } catch (err) {
       console.error(err);
-      showMsg(msg, "تعذّر حفظ الصورة، حاول مرة أخرى.", "error");
+      showMsg(msg, "تعذّر حفظ الصورة (" + (err.code || err.message || "خطأ غير معروف") + ").", "error");
     } finally {
       saveBtn.textContent = "حفظ الصورة";
     }
@@ -634,7 +643,7 @@ function setupBannerAndTicker() {
       showMsg(tickerMsg, "تم حفظ العبارة، وستظهر في صفحة المعلمين فوراً.", "success");
     } catch (err) {
       console.error(err);
-      showMsg(tickerMsg, "تعذّر حفظ العبارة، حاول مرة أخرى.", "error");
+      showMsg(tickerMsg, "تعذّر حفظ العبارة (" + (err.code || err.message || "خطأ غير معروف") + ").", "error");
     }
   });
 
