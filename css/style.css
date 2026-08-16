@@ -694,13 +694,14 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
 }
 .ticker-bar .ticker-track{
   display:inline-block;
-  padding-inline-start:100%;
-  animation:ticker-scroll 24s linear infinite;
+  white-space:nowrap;
+  transform:translateX(100%);
+  animation:ticker-scroll 22s linear infinite;
   color:var(--accent-teal);
   font-weight:600;
   font-size:13.5px;
 }
 @keyframes ticker-scroll{
-  from{transform:translateX(0);}
+  from{transform:translateX(100%);}
   to{transform:translateX(-100%);}
 }
