@@ -692,7 +692,7 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
   border-bottom:1px solid var(--panel-border);
   overflow:hidden;
   white-space:nowrap;
-  padding:9px 0;
+  padding:14px 0;
   margin-top:16px;
 }
 .ticker-bar .ticker-track{
@@ -701,8 +701,13 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
   transform:translateX(100%);
   animation:ticker-scroll 22s linear infinite;
   color:var(--accent-teal);
-  font-weight:600;
-  font-size:13.5px;
+  font-weight:800;
+  font-size:19px;
+  letter-spacing:0.3px;
+  text-shadow:
+    0 0 8px rgba(31,216,196,0.85),
+    0 0 18px rgba(31,216,196,0.55),
+    0 0 32px rgba(31,216,196,0.35);
 }
 @keyframes ticker-scroll{
   from{transform:translateX(100%);}
