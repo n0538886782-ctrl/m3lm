@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0c1740" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>إنشاء حساب معلم | نظام تقييم الأداء الوظيفي</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="gov-header">
+  <div class="gov-header-text">
+    <p class="country">المملكة العربية السعودية</p>
+    <p>وزارة التعليم</p>
+    <div class="schools">
+      <span>متوسطة أبي بن كعب</span>
+      <span>ابتدائية عروة بن الزبير</span>
+    </div>
+  </div>
+  <div class="gov-header-logo">
+    <div class="gov-header-logo-text">
+      <strong>وزارة التعليم</strong>
+      <small>Ministry of Education</small>
+    </div>
+    <div class="gov-header-logo-badge">
+      <img src="assets/logo.png" alt="شعار وزارة التعليم" />
+    </div>
+  </div>
+</header>
+
+<div class="site-banner" id="siteBannerWrap"></div>
+
+<div class="login-shell">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="brand-text">
+        <strong>نظام تقييم الأداء الوظيفي</strong>
+        <small>إنشاء حساب معلم جديد</small>
+      </div>
+    </div>
+
+    <h1 class="login-title">إنشاء حسابك</h1>
+    <p class="login-sub">أدخل بياناتك لإنشاء حسابك الخاص كمعلم في النظام</p>
+
+    <div id="registerMsg" class="form-msg"></div>
+
+    <form id="registerForm">
+      <div class="field">
+        <label for="rName">الاسم الكامل</label>
+        <input id="rName" type="text" placeholder="مثال: أحمد سالم" required />
+      </div>
+      <div class="field">
+        <label for="rUsername">اسم المستخدم</label>
+        <input id="rUsername" type="text" placeholder="حروف إنجليزية أو أرقام، مثال: ahmed.salem" required />
+      </div>
+      <div class="field">
+        <label for="rPassword">كلمة المرور</label>
+        <input id="rPassword" type="password" placeholder="6 أحرف على الأقل" minlength="6" required />
+      </div>
+      <button type="submit" id="registerBtn" class="btn btn-primary">إنشاء الحساب والدخول</button>
+    </form>
+
+    <p class="login-foot">
+      لديك حساب بالفعل؟ <a href="index.html" class="link-inline">سجّل الدخول من هنا</a>
+    </p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/common.js"></script>
+<script>
+  const form = document.getElementById("registerForm");
+  const msg = document.getElementById("registerMsg");
+  const btn = document.getElementById("registerBtn");
+
+  // إن كان مسجّلاً دخوله بالفعل، حوّله لصفحته مباشرة
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) return;
+    const doc = await db.collection("users").doc(user.uid).get();
+    if (doc.exists) {
+      window.location.href = doc.data().role === "admin" ? "admin.html" : "teacher.html";
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideMsg(msg);
+
+    const name = document.getElementById("rName").value.trim();
+    const username = document.getElementById("rUsername").value.trim().toLowerCase();
+    const password = document.getElementById("rPassword").value;
+
+    if (!/^[a-z0-9_.]{3,30}$/.test(username)) {
+      showMsg(msg, "اسم المستخدم يجب أن يكون بالأحرف الإنجليزية أو أرقام فقط (3 أحرف على الأقل) بدون مسافات.", "error");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "جارٍ إنشاء الحساب...";
+
+    try {
+      const existing = await db.collection("usernames").doc(username).get();
+      if (existing.exists) throw new Error("اسم المستخدم هذا مستخدم بالفعل، اختر اسماً آخر.");
+
+      const email = usernameToEmail(username);
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = cred.user.uid;
+
+      const batch = db.batch();
+      batch.set(db.collection("users").doc(uid), {
+        name, username, role: "teacher",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      batch.set(db.collection("usernames").doc(username), { uid, role: "teacher" });
+      await batch.commit();
+
+      window.location.href = "teacher.html";
+    } catch (err) {
+      console.error(err);
+      let text = err.message || "حدث خطأ أثناء إنشاء الحساب.";
+      if (err.code === "auth/email-already-in-use") text = "اسم المستخدم هذا مستخدم بالفعل.";
+      if (err.code === "auth/weak-password") text = "كلمة المرور ضعيفة، استخدم 6 أحرف على الأقل.";
+      showMsg(msg, text, "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "إنشاء الحساب والدخول";
+    }
+  });
+</script>
+</body>
+</html>

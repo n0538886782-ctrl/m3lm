@@ -248,6 +248,124 @@ function printTeacherReport(profile, elements, evidences) {
   setTimeout(() => win.print(), 400);
 }
 
+/* ---------- الدخول بالبصمة / الوجه (قفل الجهاز) ----------
+   ملاحظة أمنية مهمة: هذه الميزة تستخدم حساس البصمة/الوجه في الجهاز
+   (عبر معيار WebAuthn) كـ"قفل محلي" فوق جلسة الدخول المحفوظة أصلاً
+   من Firebase على هذا الجهاز تحديداً. وهي مريحة جداً وتمنع فتح
+   الحساب لمن لا يملك بصمة صاحبه على هذا الجهاز بعينه، لكنها ليست
+   تحققاً مشفّراً من الخادم (يتطلب ذلك خادماً خلفياً لا نملكه هنا). */
+
+function isWebAuthnSupported() {
+  return typeof PublicKeyCredential !== "undefined" && !!(navigator.credentials && navigator.credentials.create);
+}
+
+function b64urlEncode(buffer) {
+  let binary = "";
+  new Uint8Array(buffer).forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64urlDecode(str) {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) str += "=";
+  const bin = atob(str);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function hasDeviceBiometric(uid) {
+  return !!localStorage.getItem(`bioCred_${uid}`);
+}
+
+function removeDeviceBiometric(uid) {
+  localStorage.removeItem(`bioCred_${uid}`);
+}
+
+async function registerDeviceBiometric(uid, displayName) {
+  if (!isWebAuthnSupported()) {
+    throw new Error("جهازك أو متصفحك الحالي لا يدعم الدخول بالبصمة.");
+  }
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const userIdBytes = new TextEncoder().encode(uid);
+
+  const credential = await navigator.credentials.create({
+    publicKey: {
+      challenge,
+      rp: { name: "نظام تقييم الأداء الوظيفي" },
+      user: { id: userIdBytes, name: displayName || uid, displayName: displayName || "مستخدم" },
+      pubKeyCredParams: [
+        { type: "public-key", alg: -7 },
+        { type: "public-key", alg: -257 },
+      ],
+      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+      timeout: 60000,
+      attestation: "none",
+    },
+  });
+  if (!credential) throw new Error("لم تكتمل عملية التفعيل.");
+
+  localStorage.setItem(`bioCred_${uid}`, b64urlEncode(credential.rawId));
+  return true;
+}
+
+async function verifyDeviceBiometric(uid) {
+  if (!isWebAuthnSupported()) return false;
+  const stored = localStorage.getItem(`bioCred_${uid}`);
+  if (!stored) return false;
+
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  try {
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: b64urlDecode(stored), type: "public-key" }],
+        userVerification: "required",
+        timeout: 60000,
+      },
+    });
+    return !!assertion;
+  } catch (err) {
+    return false;
+  }
+}
+
+// يعرض قفل البصمة إن كان مفعّلاً على هذا الجهاز لهذا المستخدم، وينفّذ onUnlock عند النجاح
+function guardWithBiometric(uid, onUnlock) {
+  if (!hasDeviceBiometric(uid)) {
+    onUnlock();
+    return;
+  }
+  const overlay = document.getElementById("bioLockOverlay");
+  if (!overlay) {
+    onUnlock();
+    return;
+  }
+  overlay.classList.add("show");
+
+  const unlockBtn = document.getElementById("bioUnlockBtn");
+  const statusEl = document.getElementById("bioLockStatus");
+
+  const tryUnlock = async () => {
+    if (statusEl) statusEl.textContent = "";
+    unlockBtn.disabled = true;
+    unlockBtn.textContent = "جارٍ التحقق...";
+    const ok = await verifyDeviceBiometric(uid);
+    unlockBtn.disabled = false;
+    unlockBtn.textContent = "فتح ببصمتك";
+    if (ok) {
+      overlay.classList.remove("show");
+      onUnlock();
+    } else if (statusEl) {
+      statusEl.textContent = "تعذّر التحقق من البصمة، حاول مرة أخرى.";
+    }
+  };
+
+  unlockBtn.addEventListener("click", tryUnlock);
+  // محاولة تلقائية أولى فور ظهور القفل
+  tryUnlock();
+}
+
 document.addEventListener("click", (e) => {
   const trigger = e.target.closest("[data-logout]");
   if (trigger) logout();

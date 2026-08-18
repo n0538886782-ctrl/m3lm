@@ -12,6 +12,15 @@
 </head>
 <body>
 
+<div class="bio-lock-overlay" id="bioLockOverlay">
+  <div class="bio-lock-icon">🔒</div>
+  <h2>الصفحة مقفلة بالبصمة</h2>
+  <p>افتح القفل ببصمتك أو بصمة وجهك للمتابعة إلى صفحتك</p>
+  <div class="bio-lock-status" id="bioLockStatus"></div>
+  <button class="btn btn-primary" id="bioUnlockBtn" style="width:auto; padding-inline:30px">فتح ببصمتك</button>
+  <button class="btn btn-ghost btn-sm" data-logout>تسجيل الخروج بدلاً من ذلك</button>
+</div>
+
 <header class="gov-header">
   <div class="gov-header-text">
     <p class="country">المملكة العربية السعودية</p>
@@ -150,6 +159,14 @@
             <button type="submit" class="btn btn-primary" style="width:auto; padding-inline:26px">حفظ</button>
           </form>
         </div>
+      </div>
+
+      <div class="panel" style="margin-top:20px">
+        <h2 class="panel-title">الدخول بالبصمة على هذا الجهاز</h2>
+        <p class="panel-sub">فعّلها لتفتح حسابك ببصمة إصبعك أو وجهك بدل كتابة كلمة المرور في كل مرة — تعمل على هذا الجهاز والمتصفح تحديداً فقط</p>
+        <div id="bioMsg" class="form-msg"></div>
+        <div id="bioStatusWrap"></div>
+        <button type="button" id="bioToggleBtn" class="btn btn-primary btn-sm">تفعيل الدخول بالبصمة</button>
       </div>
     </section>
 

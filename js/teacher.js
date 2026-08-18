@@ -14,15 +14,54 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("tName").textContent = profile.name || "المعلم";
     document.getElementById("tUsername").textContent = "@" + profile.username;
 
-    setupNav();
-    setupAccountForms();
-    renderAdminNote(profile.adminNote);
-    document.getElementById("exportReportBtn").addEventListener("click", () => {
-      printTeacherReport(PROFILE, ELEMENTS, EVIDENCES);
+    guardWithBiometric(profile.uid, () => {
+      setupNav();
+      setupAccountForms();
+      setupBiometricToggle(profile);
+      renderAdminNote(profile.adminNote);
+      document.getElementById("exportReportBtn").addEventListener("click", () => {
+        printTeacherReport(PROFILE, ELEMENTS, EVIDENCES);
+      });
+      loadAll();
     });
-    await loadAll();
   });
 });
+
+function setupBiometricToggle(profile) {
+  const wrap = document.getElementById("bioStatusWrap");
+  const btn = document.getElementById("bioToggleBtn");
+  const msg = document.getElementById("bioMsg");
+
+  function render() {
+    const on = hasDeviceBiometric(profile.uid);
+    wrap.innerHTML = `<span class="bio-status-pill ${on ? "on" : "off"}">${on ? "✓ مفعّلة على هذا الجهاز" : "غير مفعّلة على هذا الجهاز"}</span>`;
+    btn.textContent = on ? "إلغاء تفعيل البصمة" : "تفعيل الدخول بالبصمة";
+    btn.className = on ? "btn btn-danger btn-sm" : "btn btn-primary btn-sm";
+  }
+  render();
+
+  btn.addEventListener("click", async () => {
+    hideMsg(msg);
+    if (hasDeviceBiometric(profile.uid)) {
+      removeDeviceBiometric(profile.uid);
+      showMsg(msg, "تم إلغاء تفعيل البصمة على هذا الجهاز.", "success");
+      render();
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "جارٍ التفعيل...";
+    try {
+      await registerDeviceBiometric(profile.uid, profile.name);
+      showMsg(msg, "تم تفعيل الدخول بالبصمة بنجاح على هذا الجهاز.", "success");
+    } catch (err) {
+      console.error(err);
+      showMsg(msg, err.message || "تعذّر التفعيل، تأكد أن جهازك يدعم البصمة أو الوجه.", "error");
+    } finally {
+      btn.disabled = false;
+      render();
+    }
+  });
+}
 
 function renderAdminNote(note) {
   const wrap = document.getElementById("adminNoteWrap");
