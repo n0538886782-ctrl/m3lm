@@ -33,9 +33,7 @@ service cloud.firestore {
       allow create: if isAdmin()
         || (isSignedIn() && request.auth.uid == uid
             && request.resource.data.role == 'admin'
-            && !exists(/databases/$(database)/documents/meta/system))
-        || (isSignedIn() && request.auth.uid == uid
-            && request.resource.data.role == 'teacher');
+            && !exists(/databases/$(database)/documents/meta/system));
 
       allow update: if isAdmin()
         || (isSignedIn() && request.auth.uid == uid
