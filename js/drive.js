@@ -40,7 +40,20 @@ function getDriveToken() {
 async function ensureEvidenceFolder(token) {
   const cacheKey = "driveEvidenceFolderId";
   const cached = localStorage.getItem(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    // تحقّق من أن المجلد المحفوظ لا يزال موجوداً فعلاً قبل استخدامه
+    // (قد يكون محذوفاً من Drive يدوياً، أو من تجربة سابقة فشلت)
+    const checkRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${cached}?fields=id,trashed`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (checkRes.ok) {
+      const checkData = await checkRes.json();
+      if (!checkData.trashed) return cached;
+    }
+    // المجلد غير موجود أو محذوف — نتجاهل القيمة المحفوظة وننشئ/نبحث من جديد
+    localStorage.removeItem(cacheKey);
+  }
 
   const q = encodeURIComponent(
     `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
