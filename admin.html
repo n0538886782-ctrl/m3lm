@@ -186,13 +186,22 @@
         <div id="elementMsg" class="form-msg"></div>
         <form id="elementForm" class="grid grid-2">
           <input type="hidden" id="eId" />
+          <div class="field" style="grid-column:1/-1">
+            <label for="eParent">نوع العنصر</label>
+            <select id="eParent">
+              <option value="">عنصر أساسي (رئيسي)</option>
+            </select>
+            <small style="color:var(--text-3); font-size:11.5px; margin-top:6px; display:block">
+              اختر "عنصر أساسي" لإنشاء محور رئيسي، أو اختر محوراً من القائمة لإضافة عنصر فرعي تحته يرفع عليه المعلم شواهده.
+            </small>
+          </div>
           <div class="field">
             <label for="eTitle">عنوان العنصر</label>
             <input id="eTitle" type="text" placeholder="مثال: أداء الواجبات الوظيفية" required />
           </div>
-          <div class="field">
+          <div class="field" id="eWeightField">
             <label for="eWeight">الوزن النسبي (%)</label>
-            <input id="eWeight" type="number" min="1" max="100" placeholder="10" required />
+            <input id="eWeight" type="number" min="1" max="100" placeholder="10" />
           </div>
           <div class="field" style="grid-column:1/-1">
             <label for="eExamples">أمثلة على تحقيق العنصر (اختياري)</label>

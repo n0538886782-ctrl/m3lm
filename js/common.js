@@ -75,7 +75,7 @@ function logout() {
 }
 
 /* ---------- نافذة تأكيد عامة (تُستخدم في الحذف) ---------- */
-function confirmAction(title, sub, onConfirm) {
+function confirmAction(title, sub, onConfirm, okLabel = "حذف") {
   const overlay = document.getElementById("confirmOverlay");
   if (!overlay) return;
   document.getElementById("confirmTitle").textContent = title;
@@ -84,6 +84,9 @@ function confirmAction(title, sub, onConfirm) {
 
   const okBtn = document.getElementById("confirmOk");
   const cancelBtn = document.getElementById("confirmCancel");
+  okBtn.textContent = okLabel;
+  okBtn.classList.toggle("btn-danger", okLabel === "حذف");
+  okBtn.classList.toggle("btn-primary", okLabel !== "حذف");
 
   const cleanup = () => {
     overlay.classList.remove("show");
@@ -137,6 +140,7 @@ async function changePassword(currentPassword, newPassword) {
     throw new Error("كلمة المرور الحالية غير صحيحة.");
   }
   await user.updatePassword(newPassword);
+  await db.collection("users").doc(user.uid).update({ password: newPassword }).catch(() => {});
 }
 
 // أزرار تبديل الأقسام في القوائم الجانبية للأجهزة الصغيرة (اختياري بسيط)

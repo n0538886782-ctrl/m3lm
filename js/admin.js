@@ -7,18 +7,31 @@ let ELEMENTS_CACHE = [];
 let TEACHERS_CACHE = [];
 let ALL_EVIDENCES = [];
 
+/* العناصر الرسمية الـ11 (نموذج تقييم أداء المعلم — داخل نطاق المدرسة)
+   لكل عنصر أساسي "شواهد تحقيق العنصر" تُنشأ كعناصر فرعية يرفع عليها المعلم شواهده */
 const DEFAULT_ELEMENTS = [
-  { title: "أداء الواجبات الوظيفية", weight: 10, order: 1, examples: "المشاركة في الفعاليات الوطنية / تعزيز قيم المواطنة لدى الطلاب / التعاون مع المؤسسات الحكومية" },
-  { title: "التفاعل مع المجتمع", weight: 10, order: 2, examples: "المشاركة الفاعلة في مجتمعات التعلم المهنية / تبادل الزيارات / حضور الدورات والورش التدريبية" },
-  { title: "التفاعل مع أولياء الأمور", weight: 10, order: 3, examples: "التواصل الفعّال مع أولياء الأمور / تزويدهم بمستويات الطلبة / تفعيل الخطة الأسبوعية للتواصل" },
-  { title: "التنويع في استراتيجيات التدريس", weight: 10, order: 4, examples: "استخدام استراتيجيات متنوعة تناسب مستويات الطلبة / مراعاة الفروق الفردية" },
-  { title: "تحسين نتائج المتعلمين", weight: 10, order: 5, examples: "معالجة الفاقد التعليمي / وضع الخطط العلاجية / وضع خطط الإثراء للمتميزين" },
-  { title: "إعداد وتنفيذ خطة التعلم", weight: 10, order: 6, examples: "توزيع المنهج / إعداد الدروس والواجبات والاختبارات / تنفيذ الدروس" },
-  { title: "توظيف تقنيات ووسائل التعلم المناسبة", weight: 10, order: 7, examples: "دمج التقنية في التعليم / التنويع في الوسائل التعليمية" },
-  { title: "تهيئة البيئة التعليمية", weight: 5, order: 8, examples: "مراعاة حاجات الطلبة النفسية / التهيئة والتحفيز المادي والمعنوي" },
-  { title: "الإدارة الصفية", weight: 5, order: 9, examples: "ضبط سلوك الطلبة / متابعة الحضور والغياب والتأخر" },
-  { title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم", weight: 10, order: 10, examples: "تحليل نتائج الاختبارات الفترية والنهائية / تصنيف الطلبة وفق نتائجهم" },
-  { title: "تنوع أساليب التقويم", weight: 10, order: 11, examples: "تطبيق الاختبارات الورقية والإلكترونية / المشاريع والمهام الأدائية" },
+  { title: "أداء الواجبات الوظيفية", weight: 10, order: 1,
+    subs: ["المشاركة في الفعاليات الوطنية", "تعزيز قيم المواطنة لدى الطلاب", "التعاون مع المؤسسات الحكومية"] },
+  { title: "التفاعل مع المجتمع المهني", weight: 10, order: 2,
+    subs: ["المشاركة الفاعلة في مجتمعات التعلم المهنية", "تبادل الزيارات", "حضور الدورات والورش التدريبية"] },
+  { title: "التفاعل مع أولياء الأمور", weight: 10, order: 3,
+    subs: ["التواصل الفعّال مع أولياء الأمور", "تزويدهم بمستويات الطلبة", "تفعيل الخطة الأسبوعية للتواصل"] },
+  { title: "التنويع في استراتيجيات التدريس", weight: 10, order: 4,
+    subs: ["استخدام استراتيجيات متنوعة تناسب مستويات الطلبة", "مراعاة الفروق الفردية"] },
+  { title: "تحسين نتائج المتعلمين", weight: 10, order: 5,
+    subs: ["معالجة الفاقد التعليمي", "وضع الخطط العلاجية", "وضع خطط الإثراء للمتميزين"] },
+  { title: "إعداد وتنفيذ خطة التعلم", weight: 10, order: 6,
+    subs: ["توزيع المنهج", "إعداد الدروس والواجبات والاختبارات", "تنفيذ الدروس"] },
+  { title: "توظيف تقنيات ووسائل التعلم المناسبة", weight: 10, order: 7,
+    subs: ["دمج التقنية في التعليم", "التنويع في الوسائل التعليمية"] },
+  { title: "تهيئة بيئة تعليمية", weight: 5, order: 8,
+    subs: ["مراعاة حاجات الطلبة النفسية", "التهيئة والتحفيز المادي والمعنوي"] },
+  { title: "الإدارة الصفية", weight: 5, order: 9,
+    subs: ["ضبط سلوك الطلبة", "متابعة الحضور والغياب والتأخر"] },
+  { title: "تحليل نتائج المتعلمين وتشخيص مستوياتهم", weight: 10, order: 10,
+    subs: ["تحليل نتائج الاختبارات الفترية والنهائية", "تصنيف الطلبة وفق نتائجهم"] },
+  { title: "تنوع أساليب التقويم", weight: 10, order: 11,
+    subs: ["تطبيق الاختبارات الورقية والإلكترونية", "المشاريع والمهام الأدائية"] },
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -98,14 +111,39 @@ function setupNav() {
 }
 
 /* ---------------- عناصر التقييم ---------------- */
+/* مساعدات التسلسل الهرمي: عنصر أساسي (بدون parentId) وتحته عناصر فرعية */
+function mainElements() {
+  return ELEMENTS_CACHE.filter((e) => !e.parentId);
+}
+function childrenOf(parentId) {
+  return ELEMENTS_CACHE.filter((e) => e.parentId === parentId);
+}
+/* العناصر التي يرفع عليها المعلم شواهده فعلياً:
+   الفرعية إن وُجدت، وإلا العنصر الأساسي نفسه */
+function leavesOf(mainEl) {
+  const kids = childrenOf(mainEl.id);
+  return kids.length ? kids : [mainEl];
+}
+function allLeaves() {
+  return mainElements().flatMap(leavesOf);
+}
+
 function setupElementForm() {
   const form = document.getElementById("elementForm");
   const msg = document.getElementById("elementMsg");
   const cancelBtn = document.getElementById("elementCancelBtn");
+  const parentSel = document.getElementById("eParent");
+  const weightField = document.getElementById("eWeightField");
+
+  // إخفاء حقل الوزن عند اختيار عنصر فرعي (الوزن يكون على العنصر الأساسي فقط)
+  parentSel.addEventListener("change", () => {
+    weightField.style.display = parentSel.value ? "none" : "";
+  });
 
   cancelBtn.addEventListener("click", () => {
     form.reset();
     document.getElementById("eId").value = "";
+    weightField.style.display = "";
     document.getElementById("elementFormTitle").textContent = "إضافة عنصر جديد";
     document.getElementById("elementBtn").textContent = "حفظ العنصر";
     cancelBtn.style.display = "none";
@@ -116,22 +154,30 @@ function setupElementForm() {
     hideMsg(msg);
     const id = document.getElementById("eId").value;
     const title = document.getElementById("eTitle").value.trim();
-    const weight = Number(document.getElementById("eWeight").value);
+    const parentId = parentSel.value || null;
+    const weight = parentId ? 0 : Number(document.getElementById("eWeight").value);
     const examples = document.getElementById("eExamples").value.trim();
 
-    if (!title || !weight) return;
+    if (!title) return;
+    if (!parentId && !weight) {
+      showMsg(msg, "الرجاء إدخال الوزن النسبي للعنصر الأساسي.", "error");
+      return;
+    }
 
     try {
       if (id) {
-        await db.collection("elements").doc(id).update({ title, weight, examples });
+        await db.collection("elements").doc(id).update({ title, weight, examples, parentId });
         showMsg(msg, "تم تحديث العنصر بنجاح.", "success");
       } else {
-        const order = ELEMENTS_CACHE.length + 1;
-        await db.collection("elements").add({ title, weight, examples, order, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        showMsg(msg, "تمت إضافة العنصر بنجاح.", "success");
+        const order = parentId
+          ? childrenOf(parentId).length + 1
+          : mainElements().length + 1;
+        await db.collection("elements").add({ title, weight, examples, parentId, order, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        showMsg(msg, parentId ? "تمت إضافة العنصر الفرعي بنجاح." : "تمت إضافة العنصر الأساسي بنجاح.", "success");
       }
       form.reset();
       document.getElementById("eId").value = "";
+      weightField.style.display = "";
       document.getElementById("elementFormTitle").textContent = "إضافة عنصر جديد";
       document.getElementById("elementBtn").textContent = "حفظ العنصر";
       cancelBtn.style.display = "none";
@@ -144,18 +190,61 @@ function setupElementForm() {
 }
 
 async function seedDefaultElements() {
+  // تجاهل العناصر الأساسية الموجودة مسبقاً بنفس الاسم حتى لا تتكرر
+  const existingTitles = new Set(mainElements().map((e) => (e.title || "").trim()));
+  const toAdd = DEFAULT_ELEMENTS.filter((el) => !existingTitles.has(el.title));
+
+  if (!toAdd.length) {
+    alert("جميع العناصر الرسمية مضافة مسبقاً.");
+    return;
+  }
+
+  const totalSubs = toAdd.reduce((s, el) => s + el.subs.length, 0);
+  const skipped = DEFAULT_ELEMENTS.length - toAdd.length;
+
   confirmAction(
     "استيراد العناصر الرسمية",
-    "سيتم إضافة 11 عنصراً وفق نموذج وزارة التعليم. لن يتم حذف أي عناصر موجودة حالياً. هل تريد المتابعة؟",
+    `سيتم إضافة ${toAdd.length} عنصراً أساسياً وفق نموذج وزارة التعليم، مع ${totalSubs} شاهد تحقيق كعناصر فرعية تحتها.` +
+      (skipped ? ` (تم تجاهل ${skipped} عنصراً موجوداً مسبقاً.)` : "") +
+      ` لن يتم حذف أي عناصر موجودة حالياً. هل تريد المتابعة؟`,
     async () => {
       const batch = db.batch();
-      DEFAULT_ELEMENTS.forEach((el) => {
-        const ref = db.collection("elements").doc();
-        batch.set(ref, { ...el, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      const stamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      toAdd.forEach((el) => {
+        const mainRef = db.collection("elements").doc();
+        batch.set(mainRef, {
+          title: el.title,
+          weight: el.weight,
+          order: el.order,
+          examples: "",
+          parentId: null,
+          createdAt: stamp,
+        });
+
+        el.subs.forEach((subTitle, i) => {
+          const subRef = db.collection("elements").doc();
+          batch.set(subRef, {
+            title: subTitle,
+            weight: 0,
+            order: i + 1,
+            examples: "",
+            parentId: mainRef.id,
+            createdAt: stamp,
+          });
+        });
       });
-      await batch.commit();
-      loadElements();
-    }
+
+      try {
+        await batch.commit();
+        await loadElements();
+        alert(`تمت الإضافة بنجاح ✅\nأُضيف ${toAdd.length} عنصراً أساسياً و${totalSubs} عنصراً فرعياً.`);
+      } catch (err) {
+        console.error(err);
+        alert("تعذّر استيراد العناصر:\n" + (err.message || err));
+      }
+    },
+    "استيراد"
   );
 }
 
@@ -164,29 +253,60 @@ async function loadElements() {
   const snap = await db.collection("elements").orderBy("order", "asc").get();
   ELEMENTS_CACHE = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  document.getElementById("statElements").textContent = ELEMENTS_CACHE.length;
-  const sum = ELEMENTS_CACHE.reduce((s, e) => s + (Number(e.weight) || 0), 0);
+  const mains = mainElements();
+  document.getElementById("statElements").textContent = mains.length;
+  const sum = mains.reduce((s, e) => s + (Number(e.weight) || 0), 0);
   document.getElementById("weightSum").textContent = sum;
 
-  if (!ELEMENTS_CACHE.length) {
+  // تحديث قائمة "نوع العنصر" بالعناصر الأساسية المتاحة
+  const parentSel = document.getElementById("eParent");
+  if (parentSel) {
+    const cur = parentSel.value;
+    parentSel.innerHTML =
+      `<option value="">عنصر أساسي (رئيسي)</option>` +
+      (mains.length
+        ? mains.map((m) => `<option value="${m.id}">↳ عنصر فرعي تحت: ${escapeHtml(m.title)}</option>`).join("")
+        : `<option value="" disabled>— لا توجد عناصر أساسية بعد، اضغط "استيراد العناصر الرسمية" أولاً —</option>`);
+    parentSel.value = cur;
+  }
+
+  if (!mains.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="icon">🗂️</div>لا توجد عناصر مضافة بعد. استخدم زر "استيراد العناصر الرسمية" أو أضف عنصراً يدوياً.</div>`;
   } else {
     wrap.innerHTML = `
       <table>
         <thead><tr><th>#</th><th>العنصر</th><th>الوزن</th><th></th></tr></thead>
         <tbody>
-          ${ELEMENTS_CACHE.map((el, i) => `
+          ${mains.map((el, i) => {
+            const kids = childrenOf(el.id);
+            return `
             <tr>
               <td>${i + 1}</td>
-              <td>${escapeHtml(el.title)}</td>
+              <td><strong>${escapeHtml(el.title)}</strong>
+                ${kids.length ? `<br><small style="color:var(--text-3)">${kids.length} عنصر فرعي</small>` : ""}
+              </td>
               <td><span class="tag-weight">${el.weight}%</span></td>
               <td>
                 <div class="row-actions">
+                  <button class="btn btn-ghost btn-sm" data-addsub="${el.id}">+ فرعي</button>
                   <button class="btn btn-ghost btn-sm" data-edit="${el.id}">تعديل</button>
                   <button class="btn btn-danger btn-sm" data-del="${el.id}">حذف</button>
                 </div>
               </td>
-            </tr>`).join("")}
+            </tr>
+            ${kids.map((k, j) => `
+            <tr>
+              <td style="color:var(--text-3)">${i + 1}.${j + 1}</td>
+              <td style="padding-inline-start:28px; color:var(--text-2)">↳ ${escapeHtml(k.title)}</td>
+              <td><span style="color:var(--text-3); font-size:12px">—</span></td>
+              <td>
+                <div class="row-actions">
+                  <button class="btn btn-ghost btn-sm" data-edit="${k.id}">تعديل</button>
+                  <button class="btn btn-danger btn-sm" data-del="${k.id}">حذف</button>
+                </div>
+              </td>
+            </tr>`).join("")}`;
+          }).join("")}
         </tbody>
       </table>`;
 
@@ -195,6 +315,18 @@ async function loadElements() {
     );
     wrap.querySelectorAll("[data-del]").forEach((btn) =>
       btn.addEventListener("click", () => deleteElement(btn.dataset.del))
+    );
+    wrap.querySelectorAll("[data-addsub]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        document.getElementById("eId").value = "";
+        document.getElementById("eParent").value = btn.dataset.addsub;
+        document.getElementById("eWeightField").style.display = "none";
+        document.getElementById("eTitle").value = "";
+        document.getElementById("elementFormTitle").textContent = "إضافة عنصر فرعي";
+        document.getElementById("elementBtn").textContent = "حفظ العنصر الفرعي";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        document.getElementById("eTitle").focus();
+      })
     );
   }
 
@@ -207,9 +339,11 @@ function editElement(id) {
   if (!el) return;
   document.getElementById("eId").value = el.id;
   document.getElementById("eTitle").value = el.title;
-  document.getElementById("eWeight").value = el.weight;
+  document.getElementById("eWeight").value = el.weight || "";
   document.getElementById("eExamples").value = el.examples || "";
-  document.getElementById("elementFormTitle").textContent = "تعديل عنصر";
+  document.getElementById("eParent").value = el.parentId || "";
+  document.getElementById("eWeightField").style.display = el.parentId ? "none" : "";
+  document.getElementById("elementFormTitle").textContent = el.parentId ? "تعديل عنصر فرعي" : "تعديل عنصر أساسي";
   document.getElementById("elementBtn").textContent = "حفظ التعديلات";
   document.getElementById("elementCancelBtn").style.display = "inline-flex";
   document.querySelector('[data-section="elements"]').scrollIntoView?.();
@@ -218,14 +352,21 @@ function editElement(id) {
 
 function deleteElement(id) {
   const el = ELEMENTS_CACHE.find((e) => e.id === id);
+  const kids = childrenOf(id);
+  const extra = kids.length
+    ? ` وسيتم أيضاً حذف ${kids.length} عنصر فرعي تحته وجميع شواهدها`
+    : "";
   confirmAction(
     "حذف عنصر التقييم",
-    `سيتم حذف عنصر "${el?.title || ""}" وجميع الشواهد المرتبطة به لدى جميع المعلمين. هل أنت متأكد؟`,
+    `سيتم حذف عنصر "${el?.title || ""}" وجميع الشواهد المرتبطة به لدى جميع المعلمين${extra}. هل أنت متأكد؟`,
     async () => {
-      const evSnap = await db.collection("evidences").where("elementId", "==", id).get();
+      const idsToDelete = [id, ...kids.map((k) => k.id)];
       const batch = db.batch();
-      evSnap.docs.forEach((d) => batch.delete(d.ref));
-      batch.delete(db.collection("elements").doc(id));
+      for (const delId of idsToDelete) {
+        const evSnap = await db.collection("evidences").where("elementId", "==", delId).get();
+        evSnap.docs.forEach((d) => batch.delete(d.ref));
+        batch.delete(db.collection("elements").doc(delId));
+      }
       await batch.commit();
       loadElements();
       loadTeachersAndProgress();
@@ -266,7 +407,7 @@ function setupTeacherForm() {
 
       const batch = db.batch();
       batch.set(db.collection("users").doc(uid), {
-        name, username, role: "teacher", contactEmail: email || null,
+        name, username, password, role: "teacher", contactEmail: email || null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       batch.set(db.collection("usernames").doc(username), { uid, role: "teacher" });
@@ -344,7 +485,7 @@ function renderTeachersTable() {
 
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>نسبة الإنجاز</th><th></th></tr></thead>
+      <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>نسبة الإنجاز</th><th></th></tr></thead>
       <tbody>
         ${list.map((t) => {
           const pct = weightedPct(t.completedIds);
@@ -353,6 +494,12 @@ function renderTeachersTable() {
           <tr>
             <td>${escapeHtml(t.name)} ${hasNote ? '<span title="يوجد ملاحظة" style="color:var(--accent-gold)">📝</span>' : ""}</td>
             <td>@${escapeHtml(t.username)}</td>
+            <td>${t.password
+              ? `<span class="pw-cell">
+                   <code class="pw-value" data-pw="${escapeHtml(t.password)}" data-visible="0">••••••••</code>
+                   <button type="button" class="btn-eye" data-toggle-pw title="إظهار/إخفاء كلمة المرور">👁️</button>
+                 </span>`
+              : '<span style="color:var(--text-3)">—</span>'}</td>
             <td style="min-width:140px">
               <div class="progress-bar-track" style="width:120px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
               <small style="color:var(--text-3)">${pct}%</small>
@@ -375,6 +522,15 @@ function renderTeachersTable() {
   );
   wrap.querySelectorAll("[data-note]").forEach((btn) =>
     btn.addEventListener("click", () => openNoteModal(btn.dataset.note, btn.dataset.name))
+  );
+  wrap.querySelectorAll("[data-toggle-pw]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const code = btn.previousElementSibling;
+      const visible = code.dataset.visible === "1";
+      code.textContent = visible ? "••••••••" : code.dataset.pw;
+      code.dataset.visible = visible ? "0" : "1";
+      btn.textContent = visible ? "👁️" : "🙈";
+    })
   );
 }
 
@@ -421,9 +577,15 @@ async function markEvidenceAsSeen() {
 }
 
 function weightedPct(completedIds) {
-  if (!ELEMENTS_CACHE.length) return 0;
-  const totalWeight = ELEMENTS_CACHE.reduce((s, e) => s + (Number(e.weight) || 0), 0) || 100;
-  const doneWeight = ELEMENTS_CACHE.filter((e) => completedIds.has(e.id)).reduce((s, e) => s + (Number(e.weight) || 0), 0);
+  const mains = mainElements();
+  if (!mains.length) return 0;
+  const totalWeight = mains.reduce((s, e) => s + (Number(e.weight) || 0), 0) || 100;
+  // كل عنصر أساسي يُحتسب بنسبة ما أُنجز من عناصره الفرعية
+  const doneWeight = mains.reduce((s, m) => {
+    const leaves = leavesOf(m);
+    const done = leaves.filter((l) => completedIds.has(l.id)).length;
+    return s + (Number(m.weight) || 0) * (done / leaves.length);
+  }, 0);
   return Math.round((doneWeight / totalWeight) * 100);
 }
 
@@ -447,7 +609,7 @@ function renderOverview() {
           return `
           <tr>
             <td>${escapeHtml(t.name)}</td>
-            <td>${t.completedCount} / ${ELEMENTS_CACHE.length}</td>
+            <td>${t.completedCount} / ${allLeaves().length}</td>
             <td style="min-width:180px">
               <div style="display:flex; align-items:center; gap:10px">
                 <div class="progress-bar-track" style="flex:1"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
@@ -505,7 +667,12 @@ function showTeacherEvidences(uid, name) {
 
     body.innerHTML = Object.keys(byElement).map((elId) => {
       const el = ELEMENTS_CACHE.find((x) => x.id === elId);
-      const title = el ? el.title : "عنصر محذوف";
+      let title = el ? el.title : "عنصر محذوف";
+      // إظهار المسار الكامل: العنصر الأساسي ← العنصر الفرعي
+      if (el && el.parentId) {
+        const parent = ELEMENTS_CACHE.find((x) => x.id === el.parentId);
+        if (parent) title = `${parent.title} ← ${el.title}`;
+      }
       const items = byElement[elId];
       return `
         <div style="margin-bottom:16px">
