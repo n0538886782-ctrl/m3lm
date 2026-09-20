@@ -44,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     guardWithBiometric(profile.uid, () => {
       setupNav();
       setupTeacherForm();
+      setupBulkImport();
       setupElementForm();
       setupAccountForms();
       setupBannerAndTicker();
@@ -429,6 +430,140 @@ function setupTeacherForm() {
   });
 }
 
+/* ---------------- استيراد عدة معلمين من ملف Excel ---------------- */
+function setupBulkImport() {
+  const downloadBtn = document.getElementById("downloadTemplateBtn");
+  const fileInput = document.getElementById("importFile");
+  const importBtn = document.getElementById("importBtn");
+  const msg = document.getElementById("importMsg");
+  const results = document.getElementById("importResults");
+  if (!importBtn) return;
+
+  downloadBtn?.addEventListener("click", () => {
+    const ws = XLSX.utils.aoa_to_sheet([["الاسم", "اسم المستخدم", "كلمة المرور"], ["مثال: عبدالله سالم", "abdullah.salem", ""]]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "معلمون");
+    XLSX.writeFile(wb, "نموذج_استيراد_معلمين.xlsx");
+  });
+
+  importBtn.addEventListener("click", async () => {
+    hideMsg(msg);
+    results.innerHTML = "";
+    const file = fileInput.files[0];
+    if (!file) { showMsg(msg, "الرجاء اختيار ملف أولاً.", "error"); return; }
+
+    importBtn.disabled = true;
+    importBtn.textContent = "جارٍ القراءة...";
+
+    let rows;
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    } catch (err) {
+      console.error(err);
+      showMsg(msg, "تعذّر قراءة الملف، تأكد أنه بصيغة Excel صحيحة.", "error");
+      importBtn.disabled = false;
+      importBtn.textContent = "استيراد المعلمين";
+      return;
+    }
+
+    // مطابقة أسماء الأعمدة بمرونة (عربي/إنجليزي، بمسافات أو بدونها)
+    const pick = (row, keys) => {
+      for (const k of Object.keys(row)) {
+        const norm = k.trim().toLowerCase();
+        if (keys.some((x) => norm.includes(x))) return String(row[k]).trim();
+      }
+      return "";
+    };
+
+    const entries = rows
+      .map((row) => ({
+        name: pick(row, ["الاسم", "name"]),
+        username: pick(row, ["اسم المستخدم", "username"]).toLowerCase(),
+        password: pick(row, ["كلمة المرور", "password"]),
+      }))
+      .filter((e) => e.name || e.username);
+
+    if (!entries.length) {
+      showMsg(msg, "لم يتم العثور على أي صفوف صالحة في الملف.", "error");
+      importBtn.disabled = false;
+      importBtn.textContent = "استيراد المعلمين";
+      return;
+    }
+
+    importBtn.textContent = `جارٍ الاستيراد (0/${entries.length})...`;
+    const outcomes = [];
+
+    for (let i = 0; i < entries.length; i++) {
+      const { name, username } = entries[i];
+      let password = entries[i].password;
+      importBtn.textContent = `جارٍ الاستيراد (${i + 1}/${entries.length})...`;
+
+      if (!name || !username) {
+        outcomes.push({ name: name || "(بدون اسم)", ok: false, reason: "الاسم أو اسم المستخدم فارغ" });
+        continue;
+      }
+      if (!/^[a-z0-9_.]{3,30}$/.test(username)) {
+        outcomes.push({ name, ok: false, reason: "اسم المستخدم يجب أن يكون إنجليزي/أرقام فقط" });
+        continue;
+      }
+      if (!password) password = Math.random().toString(36).slice(-8);
+      if (password.length < 6) password = password.padEnd(6, "0");
+
+      try {
+        const existing = await db.collection("usernames").doc(username).get();
+        if (existing.exists) throw new Error("اسم المستخدم مستخدم بالفعل");
+
+        const internalEmail = usernameToEmail(username);
+        const cred = await secondaryAuth.createUserWithEmailAndPassword(internalEmail, password);
+        const uid = cred.user.uid;
+        await secondaryAuth.signOut();
+
+        const batch = db.batch();
+        batch.set(db.collection("users").doc(uid), {
+          name, username, password, role: "teacher",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        batch.set(db.collection("usernames").doc(username), { uid, role: "teacher" });
+        await batch.commit();
+
+        outcomes.push({ name, username, password, ok: true });
+      } catch (err) {
+        console.error(err);
+        let reason = err.message || "خطأ غير متوقع";
+        if (err.code === "auth/email-already-in-use") reason = "اسم المستخدم مستخدم بالفعل";
+        if (err.code === "auth/weak-password") reason = "كلمة المرور ضعيفة";
+        outcomes.push({ name, ok: false, reason });
+      }
+    }
+
+    const okCount = outcomes.filter((o) => o.ok).length;
+    const failCount = outcomes.length - okCount;
+    showMsg(msg, `تم استيراد ${okCount} معلماً بنجاح${failCount ? `، وفشل ${failCount}` : ""}.`, failCount ? "error" : "success");
+
+    results.innerHTML = `
+      <table>
+        <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>الحالة</th></tr></thead>
+        <tbody>
+          ${outcomes.map((o) => `
+            <tr>
+              <td>${escapeHtml(o.name)}</td>
+              <td>${o.ok ? "@" + escapeHtml(o.username) : "—"}</td>
+              <td>${o.ok ? `<code>${escapeHtml(o.password)}</code>` : "—"}</td>
+              <td>${o.ok ? '<span class="status-pill status-approved">تم ✅</span>' : `<span class="status-pill status-needs-review">${escapeHtml(o.reason)}</span>`}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+
+    fileInput.value = "";
+    importBtn.disabled = false;
+    importBtn.textContent = "استيراد المعلمين";
+    if (okCount) loadTeachersAndProgress();
+  });
+}
+
 async function loadTeachersAndProgress() {
   const [teachersSnap, evidenceSnap] = await Promise.all([
     db.collection("users").where("role", "==", "teacher").get(),
@@ -450,6 +585,7 @@ async function loadTeachersAndProgress() {
   renderTeachersTable();
   renderOverview();
   renderChart();
+  renderWeakestElements();
   updateEvidenceBadge();
 }
 
@@ -551,6 +687,33 @@ function renderChart() {
         <div class="chart-bar-pct">${pct}%</div>
       </div>`;
   }).join("");
+}
+
+/* ---------------- العناصر الأقل إنجازاً عبر جميع المعلمين ---------------- */
+function renderWeakestElements() {
+  const wrap = document.getElementById("weakestElementsWrap");
+  const mains = mainElements();
+  if (!mains.length || !TEACHERS_CACHE.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">🔻</div>لا توجد بيانات كافية بعد.</div>`;
+    return;
+  }
+
+  const stats = mains.map((m) => {
+    const leaves = leavesOf(m);
+    const pcts = TEACHERS_CACHE.map((t) => {
+      const done = leaves.filter((l) => t.completedIds.has(l.id)).length;
+      return (done / leaves.length) * 100;
+    });
+    const avg = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+    return { title: m.title, avg };
+  }).sort((a, b) => a.avg - b.avg);
+
+  wrap.innerHTML = stats.map((s) => `
+    <div class="chart-bar-row">
+      <div class="chart-bar-label">${escapeHtml(s.title)}</div>
+      <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${s.avg}%; ${s.avg < 40 ? "background:var(--accent-danger, #e05252)" : ""}"></div></div>
+      <div class="chart-bar-pct">${s.avg}%</div>
+    </div>`).join("");
 }
 
 /* ---------------- شارة الشواهد الجديدة ---------------- */
@@ -686,7 +849,11 @@ function showTeacherEvidences(uid, name) {
                 <div class="evidence-icon">${evidenceIcon(ev.type)}</div>
                 <div class="evidence-info">
                   <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">${escapeHtml(ev.note || ev.url)}</a>
-                  <span>${formatDate(ev.createdAt)}</span>
+                  <span>${formatDate(ev.createdAt)} ${REVIEW_BADGE[ev.status] || REVIEW_BADGE.pending}</span>
+                </div>
+                <div class="row-actions">
+                  <button class="btn btn-ghost btn-sm" data-review="approved" data-ev="${ev.id}" title="قبول الشاهد">✅ قبول</button>
+                  <button class="btn btn-ghost btn-sm" data-review="needs_review" data-ev="${ev.id}" title="طلب تعديل">✏️ يحتاج تعديل</button>
                 </div>
               </div>`).join("")}
           </div>
@@ -695,6 +862,32 @@ function showTeacherEvidences(uid, name) {
   }
 
   overlay.classList.add("show");
+
+  body.querySelectorAll("[data-review]").forEach((btn) =>
+    btn.addEventListener("click", () => setEvidenceStatus(btn.dataset.ev, btn.dataset.review, EVIDENCE_MODAL_TEACHER))
+  );
+}
+
+const REVIEW_BADGE = {
+  pending: '<span class="status-pill status-pending">قيد المراجعة</span>',
+  approved: '<span class="status-pill status-approved">✅ مقبول</span>',
+  needs_review: '<span class="status-pill status-needs-review">✏️ يحتاج تعديل</span>',
+};
+
+async function setEvidenceStatus(evidenceId, status, teacher) {
+  try {
+    await db.collection("evidences").doc(evidenceId).update({
+      status,
+      reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    toast(status === "approved" ? "تم قبول الشاهد ✅" : "تم إرسال طلب التعديل للمعلم");
+    const evIdx = ALL_EVIDENCES.findIndex((e) => e.id === evidenceId);
+    if (evIdx > -1) { ALL_EVIDENCES[evIdx].status = status; ALL_EVIDENCES[evIdx].reviewedAt = { toMillis: () => Date.now() }; }
+    if (teacher) showTeacherEvidences(teacher.uid, teacher.name);
+  } catch (err) {
+    console.error(err);
+    toast("تعذّر تحديث حالة الشاهد", true);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

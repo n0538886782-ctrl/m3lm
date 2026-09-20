@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupAccountForms();
       setupBiometricToggle(profile);
       renderAdminNote(profile.adminNote);
+      setupNotifBell();
       document.getElementById("exportReportBtn").addEventListener("click", () => {
         printTeacherReport(PROFILE, ELEMENTS, EVIDENCES);
       });
@@ -103,6 +104,62 @@ async function loadAll() {
 
   renderProgress();
   renderElements();
+  renderNotifications();
+}
+
+/* ---------------- إشعارات: الشواهد التي تحتاج تعديلاً ---------------- */
+/* ---------------- إشعارات: الشواهد التي تحتاج تعديلاً ---------------- */
+function setupNotifBell() {
+  const btn = document.getElementById("notifBellBtn");
+  const dropdown = document.getElementById("notifDropdown");
+  if (!btn || !dropdown) return;
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".notif-bell-wrap")) dropdown.style.display = "none";
+  });
+  dropdown.addEventListener("click", (e) => {
+    const item = e.target.closest("[data-goto-main]");
+    if (!item || !item.dataset.gotoMain) return;
+    dropdown.style.display = "none";
+    document.querySelector('[data-section="portfolio"]')?.click();
+    setTimeout(() => {
+      const card = document.querySelector(`.element-card[data-el-id="${item.dataset.gotoMain}"]`);
+      if (card) {
+        card.classList.add("open");
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 150);
+  });
+}
+
+function renderNotifications() {
+  const flagged = EVIDENCES.filter((e) => e.status === "needs_review");
+  const badge = document.getElementById("notifBadge");
+  const dropdown = document.getElementById("notifDropdown");
+  if (!badge || !dropdown) return;
+
+  if (flagged.length) {
+    badge.textContent = flagged.length > 99 ? "99+" : flagged.length;
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+
+  dropdown.innerHTML = flagged.length
+    ? flagged.map((ev) => {
+        const el = ELEMENTS.find((x) => x.id === ev.elementId);
+        const mainEl = el && el.parentId ? ELEMENTS.find((x) => x.id === el.parentId) : el;
+        return `
+          <button class="notif-item" data-goto-main="${mainEl ? mainEl.id : ""}">
+            <strong>✏️ ${escapeHtml(el ? el.title : "عنصر")}</strong>
+            <span>${escapeHtml(ev.note || ev.fileName || "شاهد يحتاج تعديل")}</span>
+          </button>`;
+      }).join("")
+    : `<div class="notif-empty">لا توجد إشعارات جديدة 🎉</div>`;
 }
 
 /* ---------------- مساعدات التسلسل الهرمي ---------------- */
@@ -148,6 +205,12 @@ function renderProgress() {
 }
 
 /* ---------------- بطاقات العناصر ---------------- */
+const TEACHER_STATUS_BADGE = {
+  pending: '<span class="status-pill status-pending">قيد المراجعة</span>',
+  approved: '<span class="status-pill status-approved">✅ مقبول</span>',
+  needs_review: '<span class="status-pill status-needs-review">✏️ يحتاج تعديل</span>',
+};
+
 /* يبني كتلة الشواهد + نموذج الإضافة لعنصر واحد يرفع عليه المعلم شواهده */
 function evidenceBlockHtml(leaf, isSub) {
   const evs = EVIDENCES.filter((e) => e.elementId === leaf.id);
@@ -166,7 +229,7 @@ function evidenceBlockHtml(leaf, isSub) {
             <div class="evidence-icon">${evidenceIcon(ev.type)}</div>
             <div class="evidence-info">
               <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">${escapeHtml(ev.note || ev.fileName || ev.url)}</a>
-              <span>${formatDate(ev.createdAt)}</span>
+              <span>${formatDate(ev.createdAt)} ${TEACHER_STATUS_BADGE[ev.status] || TEACHER_STATUS_BADGE.pending}</span>
             </div>
             <button class="btn btn-danger btn-sm" data-del-evidence="${ev.id}" data-leaf-id="${leaf.id}">حذف</button>
           </div>`).join("") : `<div class="evidence-empty">لم تُضِف أي شاهد لهذا العنصر بعد</div>`}
@@ -307,6 +370,7 @@ async function handleAddEvidence(e, leaf, mainEl) {
       teacherUsername: PROFILE.username,
       elementId: leaf.id,
       type, url, fileName, note,
+      status: "pending",
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 

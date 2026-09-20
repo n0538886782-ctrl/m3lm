@@ -516,6 +516,13 @@ input, select, textarea{font-family:inherit;}
 .evidence-info{flex:1; min-width:0;}
 .evidence-info a{font-size:13px; font-weight:600; text-decoration:none; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .evidence-info span{font-size:11px; color:var(--text-3);}
+.status-pill{
+  display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px;
+  border-radius:999px; margin-inline-start:6px;
+}
+.status-pill.status-pending{background:rgba(255,255,255,0.08); color:var(--text-2);}
+.status-pill.status-approved{background:rgba(46,196,120,0.18); color:#2ec478;}
+.status-pill.status-needs-review{background:rgba(230,90,90,0.18); color:#e65a5a;}
 .evidence-empty{
   text-align:center; padding:20px 10px; color:var(--text-3); font-size:13px;
   border:1px dashed var(--panel-border); border-radius:10px;
@@ -765,4 +772,43 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
 @keyframes ticker-scroll{
   from{transform:translateX(100%);}
   to{transform:translateX(-100%);}
+}
+
+/* رسالة التنبيه العائمة (toast) */
+.app-toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:#1c2340; color:#fff; padding:12px 22px; border-radius:12px;
+  font-size:13.5px; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,0.3);
+  opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+  z-index:9999; max-width:90vw; text-align:center;
+}
+.app-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+.app-toast.error{background:#7a2323;}
+
+/* جرس الإشعارات (بوابة المعلم) */
+.notif-bell-wrap{position:relative;}
+.notif-bell{position:relative;}
+.notif-badge{
+  position:absolute; top:-4px; left:-6px; background:#e65a5a; color:#fff;
+  font-size:10px; font-weight:800; min-width:16px; height:16px; border-radius:999px;
+  display:flex; align-items:center; justify-content:center; padding:0 4px;
+}
+.notif-dropdown{
+  position:absolute; top:calc(100% + 8px); left:0; z-index:200;
+  width:280px; max-height:320px; overflow-y:auto;
+  background:#1c2340; border:1px solid var(--panel-border); border-radius:12px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.35); padding:8px;
+}
+.notif-item{
+  display:block; width:100%; text-align:right; background:transparent; border:none;
+  color:#fff; padding:10px 12px; border-radius:8px; cursor:pointer; font-size:12.5px;
+}
+.notif-item:hover{background:rgba(255,255,255,0.06);}
+.notif-item strong{display:block; font-size:12.5px; margin-bottom:2px;}
+.notif-item span{color:var(--text-3); font-size:11px;}
+.notif-empty{padding:16px; text-align:center; color:var(--text-3); font-size:12.5px;}
+
+.btn-link-inline{
+  background:none; border:none; color:var(--accent-teal); font-weight:700;
+  font-size:inherit; cursor:pointer; text-decoration:underline; padding:0;
 }

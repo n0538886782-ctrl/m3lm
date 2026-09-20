@@ -198,24 +198,57 @@ document.addEventListener("click", (e) => {
 
 /* ---------- طباعة / تصدير تقرير أداء معلم كملف PDF عبر الطباعة ---------- */
 function printTeacherReport(profile, elements, evidences) {
-  const totalWeight = elements.reduce((s, e) => s + (Number(e.weight) || 0), 0) || 100;
+  const mains = elements.filter((e) => !e.parentId);
+  const childrenOf = (id) => elements.filter((e) => e.parentId === id);
   const completedIds = new Set(evidences.map((e) => e.elementId));
-  const doneWeight = elements.filter((e) => completedIds.has(e.id)).reduce((s, e) => s + (Number(e.weight) || 0), 0);
-  const pct = elements.length ? Math.round((doneWeight / totalWeight) * 100) : 0;
-  const today = new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
 
-  const rows = elements.map((el) => {
-    const evs = evidences.filter((e) => e.elementId === el.id);
-    const links = evs.length
-      ? evs.map((e) => `<div class="pr-link">• ${escapeHtml(e.note || e.url)}</div>`).join("")
-      : `<span class="pr-empty">لا يوجد</span>`;
+  const totalWeight = mains.reduce((s, e) => s + (Number(e.weight) || 0), 0) || 100;
+  const doneWeight = mains.reduce((s, m) => {
+    const kids = childrenOf(m.id);
+    const leaves = kids.length ? kids : [m];
+    const done = leaves.filter((l) => completedIds.has(l.id)).length;
+    return s + (Number(m.weight) || 0) * (done / leaves.length);
+  }, 0);
+  const pct = mains.length ? Math.round((doneWeight / totalWeight) * 100) : 0;
+
+  const today = new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+  const STATUS_LABEL = { approved: "✅ مقبول", needs_review: "✏️ يحتاج تعديل" };
+
+  const evidenceLine = (e) =>
+    `<div class="pr-link">• ${escapeHtml(e.note || e.fileName || e.url)}${e.status ? ` — ${STATUS_LABEL[e.status] || ""}` : ""}</div>`;
+
+  let totalLeaves = 0, doneLeaves = 0;
+
+  const rows = mains.map((m) => {
+    const kids = childrenOf(m.id);
+    const leaves = kids.length ? kids : [m];
+    const doneCount = leaves.filter((l) => completedIds.has(l.id)).length;
+    totalLeaves += leaves.length;
+    doneLeaves += doneCount;
+
+    const subRows = kids.length
+      ? kids.map((k) => {
+          const evs = evidences.filter((e) => e.elementId === k.id);
+          return `
+            <tr>
+              <td style="padding-inline-start:26px; color:#555">↳ ${escapeHtml(k.title)}</td>
+              <td></td>
+              <td>${evs.length ? "مكتمل ✓" : "لم يبدأ"}</td>
+              <td>${evs.length ? evs.map(evidenceLine).join("") : '<span class="pr-empty">لا يوجد</span>'}</td>
+            </tr>`;
+        }).join("")
+      : "";
+
+    const ownEvs = kids.length ? [] : evidences.filter((e) => e.elementId === m.id);
+
     return `
-      <tr>
-        <td>${escapeHtml(el.title)}</td>
-        <td>${el.weight}%</td>
-        <td>${evs.length ? "مكتمل ✓" : "لم يبدأ"}</td>
-        <td>${links}</td>
-      </tr>`;
+      <tr style="background:#f7f8fc">
+        <td><strong>${escapeHtml(m.title)}</strong></td>
+        <td><strong>${m.weight}%</strong></td>
+        <td><strong>${doneCount} / ${leaves.length}</strong></td>
+        <td>${kids.length ? "" : (ownEvs.length ? ownEvs.map(evidenceLine).join("") : '<span class="pr-empty">لا يوجد</span>')}</td>
+      </tr>
+      ${subRows}`;
   }).join("");
 
   const win = window.open("", "_blank");
@@ -233,17 +266,18 @@ function printTeacherReport(profile, elements, evidences) {
       .pr-link{margin-bottom:3px;}
       .pr-empty{color:#999;}
       .header-schools{font-weight:800; font-size:14px; margin-bottom:2px;}
+      @media print { .no-print{display:none;} }
     </style></head><body>
       <div class="header-schools">متوسطة أبي بن كعب | ابتدائية عروة بن الزبير</div>
       <div class="sub">وزارة التعليم — المملكة العربية السعودية</div>
       <h1>تقرير أداء المعلم: ${escapeHtml(profile.name)}</h1>
       <div class="sub">اسم المستخدم: ${escapeHtml(profile.username)} — تاريخ التصدير: ${today}</div>
       <div class="meta">
-        <div><b>${pct}%</b>نسبة الإنجاز الإجمالية</div>
-        <div><b>${elements.filter((e) => completedIds.has(e.id)).length} / ${elements.length}</b>عناصر مكتملة</div>
+        <div><b>${pct}%</b>نسبة الإنجاز الإجمالية (موزونة)</div>
+        <div><b>${doneLeaves} / ${totalLeaves}</b>عناصر مكتملة</div>
       </div>
       <table>
-        <thead><tr><th>عنصر الأداء الوظيفي</th><th>الوزن</th><th>الحالة</th><th>الشواهد</th></tr></thead>
+        <thead><tr><th>عنصر الأداء الوظيفي</th><th>الوزن</th><th>الإنجاز</th><th>الشواهد</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </body></html>
@@ -386,3 +420,17 @@ document.addEventListener("click", (e) => {
     document.querySelector(".sidebar")?.classList.remove("menu-open");
   }
 });
+
+/* ---------- رسالة تنبيه عائمة صغيرة (toast) ---------- */
+function toast(text, isError = false) {
+  let el = document.getElementById("appToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "appToast";
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.className = "app-toast" + (isError ? " error" : "") + " show";
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove("show"), 3200);
+}

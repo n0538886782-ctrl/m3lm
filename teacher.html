@@ -86,7 +86,15 @@
           <h1 class="page-title">ملف الأداء الوظيفي</h1>
           <p class="page-sub">أضف شواهدك تحت كل عنصر من عناصر الأداء الوظيفي</p>
         </div>
-        <button class="btn btn-ghost btn-sm" id="exportReportBtn">تصدير تقرير الأداء</button>
+        <div style="display:flex; align-items:center; gap:10px">
+          <div class="notif-bell-wrap">
+            <button class="btn btn-ghost btn-sm notif-bell" id="notifBellBtn" title="الإشعارات">
+              🔔 <span id="notifBadge" class="notif-badge" style="display:none">0</span>
+            </button>
+            <div id="notifDropdown" class="notif-dropdown" style="display:none"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="exportReportBtn">تصدير تقرير الأداء</button>
+        </div>
       </div>
 
       <div id="adminNoteWrap"></div>
