@@ -8,6 +8,7 @@ const JOB_TYPES = {
   teacher: { label: "معلم / معلمة", icon: "👨‍🏫" },
   wakil: { label: "وكيل / وكيلة المدرسة", icon: "🧑‍💼" },
   mowajeh_talabi: { label: "موجّه / موجّهة طلابي", icon: "🧑‍🎓" },
+  nashat: { label: "رائد / رائدة نشاط", icon: "🏆" },
 };
 function jobTypeLabel(jt) {
   return (JOB_TYPES[jt] || JOB_TYPES.teacher).label;

@@ -51,19 +51,13 @@
 
     <form id="registerForm">
       <div class="field">
-        <label>الدور الوظيفي</label>
-        <div class="role-choice-group" id="roleChoiceGroup">
-          <div class="role-choice selected" data-job-type="teacher">
-            <span class="icon">👨‍🏫</span><span>معلم</span>
-          </div>
-          <div class="role-choice" data-job-type="wakil">
-            <span class="icon">🧑‍💼</span><span>وكيل المدرسة</span>
-          </div>
-          <div class="role-choice" data-job-type="mowajeh_talabi">
-            <span class="icon">🧑‍🎓</span><span>موجّه طلابي</span>
-          </div>
-        </div>
-        <input type="hidden" id="rJobType" value="teacher" />
+        <label for="rJobType">الدور الوظيفي</label>
+        <select id="rJobType">
+          <option value="teacher">👨‍🏫 معلم</option>
+          <option value="wakil">🧑‍💼 وكيل المدرسة</option>
+          <option value="mowajeh_talabi">🧑‍🎓 موجّه طلابي</option>
+          <option value="nashat">🏆 رائد نشاط</option>
+        </select>
       </div>
       <div class="field">
         <label for="rName">الاسم الكامل</label>
@@ -96,16 +90,7 @@
   const form = document.getElementById("registerForm");
   const msg = document.getElementById("registerMsg");
   const btn = document.getElementById("registerBtn");
-  const roleChoiceGroup = document.getElementById("roleChoiceGroup");
   const rJobType = document.getElementById("rJobType");
-
-  roleChoiceGroup.querySelectorAll(".role-choice").forEach((card) => {
-    card.addEventListener("click", () => {
-      roleChoiceGroup.querySelectorAll(".role-choice").forEach((c) => c.classList.remove("selected"));
-      card.classList.add("selected");
-      rJobType.value = card.dataset.jobType;
-    });
-  });
 
   // إن كان مسجّلاً دخوله بالفعل، حوّله لصفحته مباشرة
   auth.onAuthStateChanged(async (user) => {

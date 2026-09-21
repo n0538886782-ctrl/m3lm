@@ -82,11 +82,13 @@ const MOWAJEH_ELEMENTS = [
     examples: "نشر قواعد السلوك والمواظبة في المجتمع المدرسي والمحلي." },
 ];
 
-/* خريطة العناصر الرسمية لكل دور وظيفي، تُستخدم في الاستيراد */
+/* خريطة العناصر الرسمية لكل دور وظيفي، تُستخدم في الاستيراد.
+   "رائد نشاط" لا توجد له عناصر رسمية بعد — يُضاف يدوياً من لوحة التحكم عند توفر النموذج. */
 const ELEMENTS_BY_JOBTYPE = {
   teacher: DEFAULT_ELEMENTS,
   wakil: WAKIL_ELEMENTS,
   mowajeh_talabi: MOWAJEH_ELEMENTS,
+  nashat: [],
 };
 
 /* الدور المعروض حالياً في تبويب "عناصر التقييم" بلوحة التحكم */
@@ -276,6 +278,11 @@ function setupElementForm() {
 async function seedElementsFor(jobType) {
   const source = ELEMENTS_BY_JOBTYPE[jobType] || [];
   const label = jobTypeLabel(jobType);
+
+  if (!source.length) {
+    alert(`لا توجد عناصر رسمية جاهزة لدور "${label}" بعد.\nيمكنك إضافتها يدوياً من نموذج "إضافة عنصر جديد" أعلاه.`);
+    return;
+  }
 
   // تجاهل العناصر الأساسية الموجودة مسبقاً بنفس الاسم لنفس الدور حتى لا تتكرر
   const existingTitles = new Set(mainElements(jobType).map((e) => (e.title || "").trim()));
@@ -547,6 +554,7 @@ function setupBulkImport() {
     if (!t) return "teacher";
     if (t.includes("وكيل")) return "wakil";
     if (t.includes("موجّه") || t.includes("موجه")) return "mowajeh_talabi";
+    if (t.includes("نشاط") || t.includes("رائد")) return "nashat";
     return "teacher";
   };
 

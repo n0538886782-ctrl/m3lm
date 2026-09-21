@@ -569,6 +569,7 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
 .pill.teacher{background:rgba(31,216,196,0.12); color:var(--accent-teal);}
 .pill.wakil{background:rgba(122,156,255,0.16); color:#8fa8ff;}
 .pill.mowajeh_talabi{background:rgba(232,95,150,0.14); color:#e87fb0;}
+.pill.nashat{background:rgba(232,185,95,0.16); color:#e8b95f;}
 
 /* تبويبات الدور الوظيفي (عناصر التقييم) */
 .role-tabs{display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;}
