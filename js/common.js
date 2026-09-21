@@ -5,10 +5,10 @@
 // يحوّل اسم المستخدم إلى "بريد" داخلي يفهمه Firebase Auth
 /* الأدوار الوظيفية المتاحة في النظام — يستخدمها التسجيل ولوحة المدير وصفحة المعلم */
 const JOB_TYPES = {
-  teacher: { label: "معلم / معلمة", icon: "👨‍🏫" },
-  wakil: { label: "وكيل / وكيلة المدرسة", icon: "🧑‍💼" },
-  mowajeh_talabi: { label: "موجّه / موجّهة طلابي", icon: "🧑‍🎓" },
-  nashat: { label: "رائد / رائدة نشاط", icon: "🏆" },
+  teacher: { label: "معلم", icon: "" },
+  wakil: { label: "وكيل المدرسة", icon: "" },
+  mowajeh_talabi: { label: "موجّه طلابي", icon: "" },
+  nashat: { label: "رائد نشاط", icon: "" },
 };
 function jobTypeLabel(jt) {
   return (JOB_TYPES[jt] || JOB_TYPES.teacher).label;

@@ -743,7 +743,7 @@ function renderTeachersTable() {
           return `
           <tr>
             <td>${escapeHtml(t.name)} ${hasNote ? '<span title="يوجد ملاحظة" style="color:var(--accent-gold)">📝</span>' : ""}</td>
-            <td><span class="pill ${jt}">${jobTypeIcon(jt)} ${escapeHtml(jobTypeLabel(jt))}</span></td>
+            <td><span class="pill ${jt}">${escapeHtml(jobTypeLabel(jt))}</span></td>
             <td>@${escapeHtml(t.username)}</td>
             <td>${t.password
               ? `<span class="pw-cell">
@@ -824,7 +824,7 @@ function renderWeakestElements() {
       return (done / leaves.length) * 100;
     });
     const avg = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
-    const title = rolesPresent ? `${jobTypeIcon(jt)} ${m.title}` : m.title;
+    const title = rolesPresent ? `${jobTypeLabel(jt)} — ${m.title}` : m.title;
     return { title, avg };
   }).filter(Boolean).sort((a, b) => a.avg - b.avg);
 

@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const jt = profile.jobType || "teacher";
     if (jt !== "teacher") {
       const badge = document.getElementById("tJobTypeBadge");
-      badge.textContent = `${jobTypeIcon(jt)} ${jobTypeLabel(jt)}`;
+      badge.textContent = jobTypeLabel(jt);
       badge.style.display = "inline-flex";
     }
 
