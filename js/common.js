@@ -3,6 +3,19 @@
    ====================================================== */
 
 // يحوّل اسم المستخدم إلى "بريد" داخلي يفهمه Firebase Auth
+/* الأدوار الوظيفية المتاحة في النظام — يستخدمها التسجيل ولوحة المدير وصفحة المعلم */
+const JOB_TYPES = {
+  teacher: { label: "معلم / معلمة", icon: "👨‍🏫" },
+  wakil: { label: "وكيل / وكيلة المدرسة", icon: "🧑‍💼" },
+  mowajeh_talabi: { label: "موجّه / موجّهة طلابي", icon: "🧑‍🎓" },
+};
+function jobTypeLabel(jt) {
+  return (JOB_TYPES[jt] || JOB_TYPES.teacher).label;
+}
+function jobTypeIcon(jt) {
+  return (JOB_TYPES[jt] || JOB_TYPES.teacher).icon;
+}
+
 function usernameToEmail(username) {
   return `${username.trim().toLowerCase()}@${AUTH_EMAIL_DOMAIN}`;
 }
@@ -198,7 +211,8 @@ document.addEventListener("click", (e) => {
 
 /* ---------- طباعة / تصدير تقرير أداء معلم كملف PDF عبر الطباعة ---------- */
 function printTeacherReport(profile, elements, evidences) {
-  const mains = elements.filter((e) => !e.parentId);
+  const jobType = profile.jobType || "teacher";
+  const mains = elements.filter((e) => !e.parentId && (e.jobType || "teacher") === jobType);
   const childrenOf = (id) => elements.filter((e) => e.parentId === id);
   const completedIds = new Set(evidences.map((e) => e.elementId));
 
@@ -270,7 +284,7 @@ function printTeacherReport(profile, elements, evidences) {
     </style></head><body>
       <div class="header-schools">متوسطة أبي بن كعب | ابتدائية عروة بن الزبير</div>
       <div class="sub">وزارة التعليم — المملكة العربية السعودية</div>
-      <h1>تقرير أداء المعلم: ${escapeHtml(profile.name)}</h1>
+      <h1>تقرير أداء ${escapeHtml(jobTypeLabel(jobType))}: ${escapeHtml(profile.name)}</h1>
       <div class="sub">اسم المستخدم: ${escapeHtml(profile.username)} — تاريخ التصدير: ${today}</div>
       <div class="meta">
         <div><b>${pct}%</b>نسبة الإنجاز الإجمالية (موزونة)</div>

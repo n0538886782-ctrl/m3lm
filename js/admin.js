@@ -34,6 +34,64 @@ const DEFAULT_ELEMENTS = [
     subs: ["تطبيق الاختبارات الورقية والإلكترونية", "المشاريع والمهام الأدائية"] },
 ];
 
+/* عناصر تقييم وكيل المدرسة — وفق نموذج وزارة التعليم (بدون شواهد فرعية) */
+const WAKIL_ELEMENTS = [
+  { title: "أداء الواجبات الوظيفية", weight: 5, order: 1 },
+  { title: "التفاعل مع المجتمع المهني", weight: 5, order: 2 },
+  { title: "التفاعل مع أولياء الأمور", weight: 5, order: 3 },
+  { title: "مرن وقادر على تنفيذ أعماله في ظل ظروف العمل المختلفة", weight: 5, order: 4 },
+  { title: "يدعم ويشارك في المبادرات النوعية", weight: 10, order: 5 },
+  { title: "يتخذ إجراءات تربوية تحقق الانضباط المدرسي", weight: 5, order: 6 },
+  { title: "يدير الموارد في المدرسة بكفاءة", weight: 5, order: 7 },
+  { title: "يشارك في إعداد خطة للتطوير المهني", weight: 5, order: 8 },
+  { title: "يقدم التغذية الراجعة ويتابع تحقق مؤشرات الأداء الوظيفي", weight: 5, order: 9 },
+  { title: "يدعم تنفيذ برامج التطوير المهني", weight: 5, order: 10 },
+  { title: "يقيم أداء منسوبي المدرسة", weight: 5, order: 11 },
+  { title: "ينفذ إجراءات علمية لتحسين نتائج التعلم", weight: 15, order: 12 },
+  { title: "يسهم في تحسين مستوى أداء المدرسة", weight: 5, order: 13 },
+  { title: "يشارك في إعداد الخطط المدرسية اللازمة", weight: 5, order: 14 },
+  { title: "يتابع تنفيذ الخطط المدرسية بمختلف أنواعها", weight: 5, order: 15 },
+  { title: "يُرئ الفرص والإمكانات الداعمة لمشاركة الطلاب في الأنشطة الصفية وغير الصفية", weight: 5, order: 16 },
+  { title: "يوظف المنصات الرقمية وتطبيقاتها المعتمدة في دعم عمليات التعليم والتعلم", weight: 5, order: 17 },
+  { title: "يتابع تعزيز السلوك الإيجابي للطلاب", weight: 5, order: 18 },
+  { title: "يُرئ بيئة مدرسية آمنة ومحفزة على التعلم", weight: 5, order: 19 },
+];
+
+/* عناصر تقييم الموجّه الطلابي — الأوزان موزّعة بالتساوي (10% لكل عنصر) بانتظار
+   الجدول الرسمي بالأوزان الدقيقة؛ يمكن تعديلها لاحقاً من لوحة التحكم */
+const MOWAJEH_ELEMENTS = [
+  { title: "يقدم التدخلات المناسبة لتعزيز الانضباط", weight: 10, order: 1,
+    examples: "تقديم برامج وممارسات داعمة للانضباط المدرسي." },
+  { title: "تقديم برامج تربوية لتعزيز دافعية الطلبة للتعلم", weight: 10, order: 2,
+    examples: "تقديم برامج نوعية لتنمية مهارات واتجاهات الطلبة نحو التعلم وفق خصائص النمو لكل مرحلة." },
+  { title: "إعداد خطة لبرامج التوجيه الطلابي", weight: 10, order: 3,
+    examples: "تصميم خطة للبرامج مكتملة العناصر ومبنية على معلومات وتحليل لواقع العمل الفعلي." },
+  { title: "يصنف الحالات ويقدم برامج الدعم المناسبة", weight: 10, order: 4,
+    examples: "تقديم برامج نوعية بناءً على تصنيف حالات الطلبة، والبرامج المناسبة لكل فئة." },
+  { title: "يعزز القيم والسلوكيات للمتعلمين", weight: 10, order: 5,
+    examples: "تزويد الطلبة ومنسوبي المدرسة بالقيم والسلوكيات الإيجابية، والعمل على تعزيزها." },
+  { title: "يقدم التدخلات النفسية والاجتماعية", weight: 10, order: 6,
+    examples: "استخدام استراتيجيات فعالة للوقاية والحد من المشكلات النفسية والاجتماعية للطلبة (المقابلة، دراسة الحالة، التوجيه الجمعي، التحويل للجهات ذات العلاقة)." },
+  { title: "يساعد المتعلمين على التخطيط المهني والتعليمي", weight: 10, order: 7,
+    examples: "تنفيذ برامج التوجيه المهني وتطبيق مقاييس الميول لاكتشاف قدرات الطلبة وتوجيههم للتخصصات المناسبة." },
+  { title: "يعزز التفوق الدراسي", weight: 10, order: 8,
+    examples: "تقديم برامج نوعية بناء على تحليل نتائج الطلبة؛ لتعزيز المتفوقين وتحفيز التفوق لدى بقية الطلبة." },
+  { title: "يقدم تدخلات تربوية للمتأخرين دراسياً والمعيدين", weight: 10, order: 9,
+    examples: "تقديم برامج مناسبة بناء على تحليل نتائج الطلاب؛ للرفع من مستوى التحصيل الدراسي." },
+  { title: "توعية المتعلمين وأولياء أمورهم بقواعد السلوك والمواظبة", weight: 10, order: 10,
+    examples: "نشر قواعد السلوك والمواظبة في المجتمع المدرسي والمحلي." },
+];
+
+/* خريطة العناصر الرسمية لكل دور وظيفي، تُستخدم في الاستيراد */
+const ELEMENTS_BY_JOBTYPE = {
+  teacher: DEFAULT_ELEMENTS,
+  wakil: WAKIL_ELEMENTS,
+  mowajeh_talabi: MOWAJEH_ELEMENTS,
+};
+
+/* الدور المعروض حالياً في تبويب "عناصر التقييم" بلوحة التحكم */
+let ELEMENTS_VIEW_JOBTYPE = "teacher";
+
 document.addEventListener("DOMContentLoaded", () => {
   guardPage("admin", (profile) => {
     CURRENT_PROFILE = profile;
@@ -50,7 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
       setupBannerAndTicker();
       setupListToolbar();
       setupBiometricToggle(profile);
-      document.getElementById("seedBtn").addEventListener("click", seedDefaultElements);
+      setupRoleTabs();
+      document.getElementById("seedBtn").addEventListener("click", () => seedElementsFor(ELEMENTS_VIEW_JOBTYPE));
 
       loadElements();
       loadTeachersAndProgress();
@@ -112,9 +171,13 @@ function setupNav() {
 }
 
 /* ---------------- عناصر التقييم ---------------- */
-/* مساعدات التسلسل الهرمي: عنصر أساسي (بدون parentId) وتحته عناصر فرعية */
-function mainElements() {
-  return ELEMENTS_CACHE.filter((e) => !e.parentId);
+/* مساعدات التسلسل الهرمي: عنصر أساسي (بدون parentId) وتحته عناصر فرعية.
+   jobType اختياري: إن مُرِّر، يُقتصر على عناصر ذلك الدور الوظيفي فقط
+   (وإلا فتُعاد كل العناصر الأساسية من كل الأدوار). */
+function mainElements(jobType) {
+  return ELEMENTS_CACHE.filter(
+    (e) => !e.parentId && (!jobType || (e.jobType || "teacher") === jobType)
+  );
 }
 function childrenOf(parentId) {
   return ELEMENTS_CACHE.filter((e) => e.parentId === parentId);
@@ -125,8 +188,25 @@ function leavesOf(mainEl) {
   const kids = childrenOf(mainEl.id);
   return kids.length ? kids : [mainEl];
 }
-function allLeaves() {
-  return mainElements().flatMap(leavesOf);
+function allLeaves(jobType) {
+  return mainElements(jobType).flatMap(leavesOf);
+}
+
+/* ---------------- تبويبات الدور الوظيفي في قسم عناصر التقييم ---------------- */
+function setupRoleTabs() {
+  const tabs = document.querySelectorAll("[data-role-tab]");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      ELEMENTS_VIEW_JOBTYPE = tab.dataset.roleTab;
+      document.getElementById("seedBtn").textContent =
+        `استيراد عناصر ${jobTypeLabel(ELEMENTS_VIEW_JOBTYPE)} الرسمية`;
+      loadElements();
+    });
+  });
+  const initial = document.querySelector("[data-role-tab].active");
+  if (initial) document.getElementById("seedBtn").textContent = `استيراد عناصر ${jobTypeLabel(initial.dataset.roleTab)} الرسمية`;
 }
 
 function setupElementForm() {
@@ -170,10 +250,13 @@ function setupElementForm() {
         await db.collection("elements").doc(id).update({ title, weight, examples, parentId });
         showMsg(msg, "تم تحديث العنصر بنجاح.", "success");
       } else {
+        const jobType = parentId
+          ? (ELEMENTS_CACHE.find((e) => e.id === parentId)?.jobType || "teacher")
+          : ELEMENTS_VIEW_JOBTYPE;
         const order = parentId
           ? childrenOf(parentId).length + 1
-          : mainElements().length + 1;
-        await db.collection("elements").add({ title, weight, examples, parentId, order, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+          : mainElements(jobType).length + 1;
+        await db.collection("elements").add({ title, weight, examples, parentId, jobType, order, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         showMsg(msg, parentId ? "تمت إضافة العنصر الفرعي بنجاح." : "تمت إضافة العنصر الأساسي بنجاح.", "success");
       }
       form.reset();
@@ -190,23 +273,29 @@ function setupElementForm() {
   });
 }
 
-async function seedDefaultElements() {
-  // تجاهل العناصر الأساسية الموجودة مسبقاً بنفس الاسم حتى لا تتكرر
-  const existingTitles = new Set(mainElements().map((e) => (e.title || "").trim()));
-  const toAdd = DEFAULT_ELEMENTS.filter((el) => !existingTitles.has(el.title));
+async function seedElementsFor(jobType) {
+  const source = ELEMENTS_BY_JOBTYPE[jobType] || [];
+  const label = jobTypeLabel(jobType);
+
+  // تجاهل العناصر الأساسية الموجودة مسبقاً بنفس الاسم لنفس الدور حتى لا تتكرر
+  const existingTitles = new Set(mainElements(jobType).map((e) => (e.title || "").trim()));
+  const toAdd = source.filter((el) => !existingTitles.has(el.title));
 
   if (!toAdd.length) {
-    alert("جميع العناصر الرسمية مضافة مسبقاً.");
+    alert(`جميع عناصر ${label} الرسمية مضافة مسبقاً.`);
     return;
   }
 
-  const totalSubs = toAdd.reduce((s, el) => s + el.subs.length, 0);
-  const skipped = DEFAULT_ELEMENTS.length - toAdd.length;
+  const totalSubs = toAdd.reduce((s, el) => s + (el.subs ? el.subs.length : 0), 0);
+  const skipped = source.length - toAdd.length;
+  const sum = source.reduce((s, e) => s + (Number(e.weight) || 0), 0);
 
   confirmAction(
-    "استيراد العناصر الرسمية",
-    `سيتم إضافة ${toAdd.length} عنصراً أساسياً وفق نموذج وزارة التعليم، مع ${totalSubs} شاهد تحقيق كعناصر فرعية تحتها.` +
+    `استيراد عناصر ${label} الرسمية`,
+    `سيتم إضافة ${toAdd.length} عنصراً أساسياً وفق نموذج وزارة التعليم لدور "${label}"` +
+      (totalSubs ? `، مع ${totalSubs} شاهد تحقيق كعناصر فرعية تحتها` : "") + `.` +
       (skipped ? ` (تم تجاهل ${skipped} عنصراً موجوداً مسبقاً.)` : "") +
+      (sum !== 100 ? ` تنبيه: مجموع الأوزان في النموذج المصدر ${sum}% (يمكنك تعديل الأوزان لاحقاً من هذه الشاشة).` : "") +
       ` لن يتم حذف أي عناصر موجودة حالياً. هل تريد المتابعة؟`,
     async () => {
       const batch = db.batch();
@@ -218,12 +307,13 @@ async function seedDefaultElements() {
           title: el.title,
           weight: el.weight,
           order: el.order,
-          examples: "",
+          examples: el.examples || "",
           parentId: null,
+          jobType,
           createdAt: stamp,
         });
 
-        el.subs.forEach((subTitle, i) => {
+        (el.subs || []).forEach((subTitle, i) => {
           const subRef = db.collection("elements").doc();
           batch.set(subRef, {
             title: subTitle,
@@ -231,6 +321,7 @@ async function seedDefaultElements() {
             order: i + 1,
             examples: "",
             parentId: mainRef.id,
+            jobType,
             createdAt: stamp,
           });
         });
@@ -239,7 +330,7 @@ async function seedDefaultElements() {
       try {
         await batch.commit();
         await loadElements();
-        alert(`تمت الإضافة بنجاح ✅\nأُضيف ${toAdd.length} عنصراً أساسياً و${totalSubs} عنصراً فرعياً.`);
+        alert(`تمت الإضافة بنجاح ✅\nأُضيف ${toAdd.length} عنصراً أساسياً${totalSubs ? ` و${totalSubs} عنصراً فرعياً` : ""} لدور ${label}.`);
       } catch (err) {
         console.error(err);
         alert("تعذّر استيراد العناصر:\n" + (err.message || err));
@@ -254,20 +345,20 @@ async function loadElements() {
   const snap = await db.collection("elements").orderBy("order", "asc").get();
   ELEMENTS_CACHE = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  const mains = mainElements();
-  document.getElementById("statElements").textContent = mains.length;
+  const mains = mainElements(ELEMENTS_VIEW_JOBTYPE);
+  document.getElementById("statElements").textContent = mainElements().length;
   const sum = mains.reduce((s, e) => s + (Number(e.weight) || 0), 0);
   document.getElementById("weightSum").textContent = sum;
 
-  // تحديث قائمة "نوع العنصر" بالعناصر الأساسية المتاحة
+  // تحديث قائمة "نوع العنصر" بالعناصر الأساسية المتاحة (ضمن الدور المعروض حالياً فقط)
   const parentSel = document.getElementById("eParent");
   if (parentSel) {
     const cur = parentSel.value;
     parentSel.innerHTML =
-      `<option value="">عنصر أساسي (رئيسي)</option>` +
+      `<option value="">عنصر أساسي (رئيسي) — ${escapeHtml(jobTypeLabel(ELEMENTS_VIEW_JOBTYPE))}</option>` +
       (mains.length
         ? mains.map((m) => `<option value="${m.id}">↳ عنصر فرعي تحت: ${escapeHtml(m.title)}</option>`).join("")
-        : `<option value="" disabled>— لا توجد عناصر أساسية بعد، اضغط "استيراد العناصر الرسمية" أولاً —</option>`);
+        : `<option value="" disabled>— لا توجد عناصر أساسية بعد لهذا الدور —</option>`);
     parentSel.value = cur;
   }
 
@@ -388,6 +479,7 @@ function setupTeacherForm() {
     const username = document.getElementById("tUsername").value.trim().toLowerCase();
     const email = document.getElementById("tEmail").value.trim();
     const password = document.getElementById("tPassword").value;
+    const jobType = document.getElementById("tJobType").value || "teacher";
 
     if (!/^[a-z0-9_.]{3,30}$/.test(username)) {
       showMsg(msg, "اسم المستخدم يجب أن يكون بالأحرف الإنجليزية أو أرقام فقط (بدون مسافات).", "error");
@@ -408,7 +500,7 @@ function setupTeacherForm() {
 
       const batch = db.batch();
       batch.set(db.collection("users").doc(uid), {
-        name, username, password, role: "teacher", contactEmail: email || null,
+        name, username, password, role: "teacher", jobType, contactEmail: email || null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       batch.set(db.collection("usernames").doc(username), { uid, role: "teacher" });
@@ -440,11 +532,23 @@ function setupBulkImport() {
   if (!importBtn) return;
 
   downloadBtn?.addEventListener("click", () => {
-    const ws = XLSX.utils.aoa_to_sheet([["الاسم", "اسم المستخدم", "كلمة المرور"], ["مثال: عبدالله سالم", "abdullah.salem", ""]]);
+    const ws = XLSX.utils.aoa_to_sheet([
+      ["الاسم", "اسم المستخدم", "كلمة المرور", "الدور الوظيفي"],
+      ["مثال: عبدالله سالم", "abdullah.salem", "", "معلم"],
+    ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "معلمون");
     XLSX.writeFile(wb, "نموذج_استيراد_معلمين.xlsx");
   });
+
+  // مطابقة نص عمود "الدور الوظيفي" (عربي بأي صياغة) إلى قيمة jobType داخلية
+  const matchJobType = (text) => {
+    const t = (text || "").trim();
+    if (!t) return "teacher";
+    if (t.includes("وكيل")) return "wakil";
+    if (t.includes("موجّه") || t.includes("موجه")) return "mowajeh_talabi";
+    return "teacher";
+  };
 
   importBtn.addEventListener("click", async () => {
     hideMsg(msg);
@@ -483,6 +587,7 @@ function setupBulkImport() {
         name: pick(row, ["الاسم", "name"]),
         username: pick(row, ["اسم المستخدم", "username"]).toLowerCase(),
         password: pick(row, ["كلمة المرور", "password"]),
+        jobType: matchJobType(pick(row, ["الدور الوظيفي", "الدور", "jobtype", "role"])),
       }))
       .filter((e) => e.name || e.username);
 
@@ -497,7 +602,7 @@ function setupBulkImport() {
     const outcomes = [];
 
     for (let i = 0; i < entries.length; i++) {
-      const { name, username } = entries[i];
+      const { name, username, jobType } = entries[i];
       let password = entries[i].password;
       importBtn.textContent = `جارٍ الاستيراد (${i + 1}/${entries.length})...`;
 
@@ -523,7 +628,7 @@ function setupBulkImport() {
 
         const batch = db.batch();
         batch.set(db.collection("users").doc(uid), {
-          name, username, password, role: "teacher",
+          name, username, password, role: "teacher", jobType,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
         batch.set(db.collection("usernames").doc(username), { uid, role: "teacher" });
@@ -605,8 +710,8 @@ function renderTeachersTable() {
   );
 
   list = [...list].sort((a, b) => {
-    if (sortBy === "pct-desc") return weightedPct(b.completedIds) - weightedPct(a.completedIds);
-    if (sortBy === "pct-asc") return weightedPct(a.completedIds) - weightedPct(b.completedIds);
+    if (sortBy === "pct-desc") return weightedPct(b.completedIds, b.jobType) - weightedPct(a.completedIds, a.jobType);
+    if (sortBy === "pct-asc") return weightedPct(a.completedIds, a.jobType) - weightedPct(b.completedIds, b.jobType);
     return a.name.localeCompare(b.name, "ar");
   });
 
@@ -621,14 +726,16 @@ function renderTeachersTable() {
 
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>نسبة الإنجاز</th><th></th></tr></thead>
+      <thead><tr><th>الاسم</th><th>الدور</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>نسبة الإنجاز</th><th></th></tr></thead>
       <tbody>
         ${list.map((t) => {
-          const pct = weightedPct(t.completedIds);
+          const pct = weightedPct(t.completedIds, t.jobType);
           const hasNote = t.adminNote && t.adminNote.trim();
+          const jt = t.jobType || "teacher";
           return `
           <tr>
             <td>${escapeHtml(t.name)} ${hasNote ? '<span title="يوجد ملاحظة" style="color:var(--accent-gold)">📝</span>' : ""}</td>
+            <td><span class="pill ${jt}">${jobTypeIcon(jt)} ${escapeHtml(jobTypeLabel(jt))}</span></td>
             <td>@${escapeHtml(t.username)}</td>
             <td>${t.password
               ? `<span class="pw-cell">
@@ -677,9 +784,9 @@ function renderChart() {
     wrap.innerHTML = `<div class="empty-state"><div class="icon">📈</div>أضف معلمين أولاً لعرض المقارنة.</div>`;
     return;
   }
-  const sorted = [...TEACHERS_CACHE].sort((a, b) => weightedPct(b.completedIds) - weightedPct(a.completedIds));
+  const sorted = [...TEACHERS_CACHE].sort((a, b) => weightedPct(b.completedIds, b.jobType) - weightedPct(a.completedIds, a.jobType));
   wrap.innerHTML = sorted.map((t) => {
-    const pct = weightedPct(t.completedIds);
+    const pct = weightedPct(t.completedIds, t.jobType);
     return `
       <div class="chart-bar-row">
         <div class="chart-bar-label">${escapeHtml(t.name)}</div>
@@ -697,16 +804,26 @@ function renderWeakestElements() {
     wrap.innerHTML = `<div class="empty-state"><div class="icon">🔻</div>لا توجد بيانات كافية بعد.</div>`;
     return;
   }
+  const rolesPresent = new Set(TEACHERS_CACHE.map((t) => t.jobType || "teacher")).size > 1;
 
   const stats = mains.map((m) => {
+    const jt = m.jobType || "teacher";
+    const relevantTeachers = TEACHERS_CACHE.filter((t) => (t.jobType || "teacher") === jt);
+    if (!relevantTeachers.length) return null;
     const leaves = leavesOf(m);
-    const pcts = TEACHERS_CACHE.map((t) => {
+    const pcts = relevantTeachers.map((t) => {
       const done = leaves.filter((l) => t.completedIds.has(l.id)).length;
       return (done / leaves.length) * 100;
     });
     const avg = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
-    return { title: m.title, avg };
-  }).sort((a, b) => a.avg - b.avg);
+    const title = rolesPresent ? `${jobTypeIcon(jt)} ${m.title}` : m.title;
+    return { title, avg };
+  }).filter(Boolean).sort((a, b) => a.avg - b.avg);
+
+  if (!stats.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">🔻</div>لا توجد بيانات كافية بعد.</div>`;
+    return;
+  }
 
   wrap.innerHTML = stats.map((s) => `
     <div class="chart-bar-row">
@@ -739,8 +856,8 @@ async function markEvidenceAsSeen() {
   CURRENT_PROFILE.lastSeenEvidenceAt = { toMillis: () => Date.now() };
 }
 
-function weightedPct(completedIds) {
-  const mains = mainElements();
+function weightedPct(completedIds, jobType) {
+  const mains = mainElements(jobType || "teacher");
   if (!mains.length) return 0;
   const totalWeight = mains.reduce((s, e) => s + (Number(e.weight) || 0), 0) || 100;
   // كل عنصر أساسي يُحتسب بنسبة ما أُنجز من عناصره الفرعية
@@ -759,7 +876,7 @@ function renderOverview() {
     document.getElementById("statAvg").textContent = "0%";
     return;
   }
-  const pcts = TEACHERS_CACHE.map((t) => weightedPct(t.completedIds));
+  const pcts = TEACHERS_CACHE.map((t) => weightedPct(t.completedIds, t.jobType));
   const avg = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
   document.getElementById("statAvg").textContent = avg + "%";
 
@@ -768,11 +885,11 @@ function renderOverview() {
       <thead><tr><th>المعلم</th><th>العناصر المكتملة</th><th>نسبة الإنجاز الموزونة</th></tr></thead>
       <tbody>
         ${TEACHERS_CACHE.map((t) => {
-          const pct = weightedPct(t.completedIds);
+          const pct = weightedPct(t.completedIds, t.jobType);
           return `
           <tr>
             <td>${escapeHtml(t.name)}</td>
-            <td>${t.completedCount} / ${allLeaves().length}</td>
+            <td>${t.completedCount} / ${allLeaves(t.jobType).length}</td>
             <td style="min-width:180px">
               <div style="display:flex; align-items:center; gap:10px">
                 <div class="progress-bar-track" style="flex:1"><div class="progress-bar-fill" style="width:${pct}%"></div></div>

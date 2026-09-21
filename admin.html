@@ -112,6 +112,12 @@
         <div id="chartWrap" class="chart-bars"></div>
       </div>
 
+      <div class="panel" style="margin-bottom:20px">
+        <h2 class="panel-title">🔻 العناصر الأقل إنجازاً</h2>
+        <p class="panel-sub">متوسط نسبة الإنجاز لكل عنصر أساسي عبر جميع المعلمين — تفيدك في توجيه المتابعة والدعم</p>
+        <div id="weakestElementsWrap" class="chart-bars"></div>
+      </div>
+
       <div class="panel">
         <h2 class="panel-title">تقدّم المعلمين</h2>
         <p class="panel-sub">النسبة محسوبة حسب الوزن النسبي للعناصر التي أضاف لها المعلم شاهداً واحداً على الأقل</p>
@@ -151,10 +157,32 @@
             <label for="tPassword">كلمة المرور المبدئية</label>
             <input id="tPassword" type="text" placeholder="6 أحرف على الأقل" required minlength="6" />
           </div>
+          <div class="field">
+            <label for="tJobType">الدور الوظيفي</label>
+            <select id="tJobType">
+              <option value="teacher">👨‍🏫 معلم / معلمة</option>
+              <option value="wakil">🧑‍💼 وكيل / وكيلة المدرسة</option>
+              <option value="mowajeh_talabi">🧑‍🎓 موجّه / موجّهة طلابي</option>
+            </select>
+          </div>
           <div style="grid-column:1/-1">
             <button type="submit" id="teacherBtn" class="btn btn-primary" style="width:auto; padding-inline:26px">إضافة المعلم</button>
           </div>
         </form>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <h2 class="panel-title">📥 استيراد عدة معلمين من ملف Excel</h2>
+        <p class="panel-sub">
+          ملف بثلاثة أعمدة: <b>الاسم</b>، <b>اسم المستخدم</b>، <b>كلمة المرور</b> (اختياري — تُولَّد تلقائياً إن تُركت فارغة).
+          <button type="button" id="downloadTemplateBtn" class="btn-link-inline">تنزيل نموذج فارغ</button>
+        </p>
+        <div id="importMsg" class="form-msg"></div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+          <input type="file" id="importFile" accept=".xlsx,.xls,.csv" />
+          <button type="button" id="importBtn" class="btn btn-primary" style="width:auto; padding-inline:22px">استيراد المعلمين</button>
+        </div>
+        <div id="importResults" style="margin-top:14px"></div>
       </div>
 
       <div class="panel">
@@ -178,11 +206,18 @@
           <h1 class="page-title">عناصر الأداء الوظيفي</h1>
           <p class="page-sub">إضافة العناصر وتعديل أوزانها وحذفها — تظهر هذه العناصر في صفحة كل معلم</p>
         </div>
-        <button class="btn btn-ghost btn-sm" id="seedBtn">استيراد العناصر الرسمية (11 عنصراً)</button>
+        <button class="btn btn-ghost btn-sm" id="seedBtn">استيراد العناصر الرسمية</button>
+      </div>
+
+      <div class="role-tabs">
+        <button type="button" class="role-tab active" data-role-tab="teacher">👨‍🏫 المعلم</button>
+        <button type="button" class="role-tab" data-role-tab="wakil">🧑‍💼 وكيل المدرسة</button>
+        <button type="button" class="role-tab" data-role-tab="mowajeh_talabi">🧑‍🎓 الموجّه الطلابي</button>
       </div>
 
       <div class="panel" style="margin-bottom:20px">
         <h2 class="panel-title" id="elementFormTitle">إضافة عنصر جديد</h2>
+        <p class="panel-sub">العنصر الجديد سيُضاف ضمن التبويب المحدد أعلاه.</p>
         <div id="elementMsg" class="form-msg"></div>
         <form id="elementForm" class="grid grid-2">
           <input type="hidden" id="eId" />
@@ -351,6 +386,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/bg-animation.js"></script>
 <script src="js/common.js"></script>

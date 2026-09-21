@@ -13,6 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("tAvatar").textContent = initials(profile.name);
     document.getElementById("tName").textContent = profile.name || "المعلم";
     document.getElementById("tUsername").textContent = "@" + profile.username;
+    const jt = profile.jobType || "teacher";
+    if (jt !== "teacher") {
+      const badge = document.getElementById("tJobTypeBadge");
+      badge.textContent = `${jobTypeIcon(jt)} ${jobTypeLabel(jt)}`;
+      badge.style.display = "inline-flex";
+    }
 
     guardWithBiometric(profile.uid, () => {
       setupNav();
@@ -163,8 +169,11 @@ function renderNotifications() {
 }
 
 /* ---------------- مساعدات التسلسل الهرمي ---------------- */
+/* تُعاد فقط عناصر الدور الوظيفي الخاص بالمعلم الحالي (الأدوار القديمة بدون
+   حقل jobType تُعامل كـ "teacher" افتراضياً للتوافق مع الحسابات السابقة) */
 function mainElements() {
-  return ELEMENTS.filter((e) => !e.parentId);
+  const myJobType = PROFILE.jobType || "teacher";
+  return ELEMENTS.filter((e) => !e.parentId && (e.jobType || "teacher") === myJobType);
 }
 function childrenOf(parentId) {
   return ELEMENTS.filter((e) => e.parentId === parentId);

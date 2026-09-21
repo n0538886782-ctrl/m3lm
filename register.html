@@ -51,6 +51,21 @@
 
     <form id="registerForm">
       <div class="field">
+        <label>الدور الوظيفي</label>
+        <div class="role-choice-group" id="roleChoiceGroup">
+          <div class="role-choice selected" data-job-type="teacher">
+            <span class="icon">👨‍🏫</span><span>معلم</span>
+          </div>
+          <div class="role-choice" data-job-type="wakil">
+            <span class="icon">🧑‍💼</span><span>وكيل المدرسة</span>
+          </div>
+          <div class="role-choice" data-job-type="mowajeh_talabi">
+            <span class="icon">🧑‍🎓</span><span>موجّه طلابي</span>
+          </div>
+        </div>
+        <input type="hidden" id="rJobType" value="teacher" />
+      </div>
+      <div class="field">
         <label for="rName">الاسم الكامل</label>
         <input id="rName" type="text" placeholder="مثال: أحمد سالم" required />
       </div>
@@ -81,6 +96,16 @@
   const form = document.getElementById("registerForm");
   const msg = document.getElementById("registerMsg");
   const btn = document.getElementById("registerBtn");
+  const roleChoiceGroup = document.getElementById("roleChoiceGroup");
+  const rJobType = document.getElementById("rJobType");
+
+  roleChoiceGroup.querySelectorAll(".role-choice").forEach((card) => {
+    card.addEventListener("click", () => {
+      roleChoiceGroup.querySelectorAll(".role-choice").forEach((c) => c.classList.remove("selected"));
+      card.classList.add("selected");
+      rJobType.value = card.dataset.jobType;
+    });
+  });
 
   // إن كان مسجّلاً دخوله بالفعل، حوّله لصفحته مباشرة
   auth.onAuthStateChanged(async (user) => {
@@ -98,6 +123,7 @@
     const name = document.getElementById("rName").value.trim();
     const username = document.getElementById("rUsername").value.trim().toLowerCase();
     const password = document.getElementById("rPassword").value;
+    const jobType = rJobType.value || "teacher";
 
     if (!/^[a-z0-9_.]{3,30}$/.test(username)) {
       showMsg(msg, "اسم المستخدم يجب أن يكون بالأحرف الإنجليزية أو أرقام فقط (3 أحرف على الأقل) بدون مسافات.", "error");
@@ -119,7 +145,7 @@
         const batch = db.batch();
         batch.set(db.collection("users").doc(uid), {
           name, username, password,
-          role: "teacher",
+          role: "teacher", jobType,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
         batch.set(db.collection("usernames").doc(username), { uid, role: "teacher" });
