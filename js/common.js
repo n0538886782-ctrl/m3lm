@@ -17,6 +17,43 @@ function jobTypeIcon(jt) {
   return (JOB_TYPES[jt] || JOB_TYPES.teacher).icon;
 }
 
+/* ضغط صورة وتحويلها إلى Data URL مناسب للتخزين المباشر في Firestore (حد المستند 1MB) */
+function compressImageToDataUrl(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+          else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => reject(new Error("تعذّر قراءة الصورة، تأكدي أن الملف صورة صحيحة."));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("تعذّر قراءة الملف"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function compressImageForStorage(file, maxBytes = 850000) {
+  let maxDim = 1400, quality = 0.82;
+  for (let i = 0; i < 5; i++) {
+    const dataUrl = await compressImageToDataUrl(file, maxDim, quality);
+    if (dataUrl.length <= maxBytes || (maxDim <= 500 && quality <= 0.35)) return dataUrl;
+    quality = Math.max(0.35, quality - 0.15);
+    maxDim = Math.max(500, Math.round(maxDim * 0.85));
+  }
+  throw new Error("تعذّر ضغط الصورة إلى حجم مناسب، جرّبي صورة أخرى أصغر حجماً.");
+}
+
 function usernameToEmail(username) {
   return `${username.trim().toLowerCase()}@${AUTH_EMAIL_DOMAIN}`;
 }

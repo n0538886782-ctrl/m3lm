@@ -62,6 +62,7 @@
       <button class="nav-link active" data-section="overview"><span class="dot"></span> نظرة عامة</button>
       <button class="nav-link" data-section="teachers"><span class="dot"></span> إدارة المعلمين <span class="nav-badge" id="newEvidenceBadge" style="display:none">0</span></button>
       <button class="nav-link" data-section="elements"><span class="dot"></span> عناصر التقييم</button>
+      <button class="nav-link" data-section="announcement"><span class="dot"></span> اللوحة الدعائية</button>
       <div class="nav-group-label">الحساب</div>
       <button class="nav-link" data-section="account"><span class="dot"></span> إعدادات الحساب</button>
       <button class="nav-link" data-logout><span class="dot"></span> تسجيل الخروج</button>
@@ -256,6 +257,44 @@
         <h2 class="panel-title">العناصر الحالية</h2>
         <p class="panel-sub">مجموع الأوزان الحالي: <span id="weightSum">0</span>% (يفضّل أن يكون المجموع 100%)</p>
         <div id="elementsTableWrap"><div class="loader"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ اللوحة الدعائية ============ -->
+    <section class="section" data-panel="announcement" hidden>
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">اللوحة الدعائية</h1>
+          <p class="page-sub">صورة إعلانية (مناسبة وطنية، موعد اختبارات، إلخ) تظهر تلقائياً لكل معلم عند دخوله على صفحته، ويمكنه إغلاقها بعد قراءتها.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <h2 class="panel-title">رفع/تحديث الصورة</h2>
+        <form id="announcementForm">
+          <div class="field">
+            <label for="annImage">اختر صورة الإعلان (يفضّل أن تكون بصيغة JPG أو PNG)</label>
+            <input id="annImage" type="file" accept="image/*" />
+          </div>
+          <div class="field">
+            <label for="annTitle">عنوان مختصر (اختياري، يظهر أعلى الصورة)</label>
+            <input id="annTitle" type="text" placeholder="مثال: مواعيد اختبارات الفصل الدراسي الثاني" />
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer">
+              <input id="annActive" type="checkbox" style="width:auto" checked />
+              تفعيل عرض اللوحة للمعلمين الآن
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">حفظ ونشر</button>
+          <button type="button" class="btn btn-danger btn-sm" id="annDeleteBtn" style="margin-inline-start:8px">إزالة اللوحة الحالية</button>
+        </form>
+        <p id="annMsg" class="form-msg" style="display:none"></p>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">المعاينة الحالية</h2>
+        <div id="annPreviewWrap"><div class="empty-state"><div class="icon">🖼️</div>لا توجد لوحة دعائية مرفوعة حالياً.</div></div>
       </div>
     </section>
 

@@ -111,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupListToolbar();
       setupBiometricToggle(profile);
       setupRoleTabs();
+      setupAnnouncementForm();
       document.getElementById("seedBtn").addEventListener("click", () => seedElementsFor(ELEMENTS_VIEW_JOBTYPE));
       document.getElementById("updateSubsBtn").addEventListener("click", updateTeacherSubs);
 
@@ -213,6 +214,95 @@ function setupRoleTabs() {
   if (initial) {
     document.getElementById("seedBtn").textContent = `استيراد عناصر ${jobTypeLabel(initial.dataset.roleTab)} الرسمية`;
     document.getElementById("updateSubsBtn").style.display = initial.dataset.roleTab === "teacher" ? "" : "none";
+  }
+}
+
+/* ---------------- اللوحة الدعائية ---------------- */
+function setupAnnouncementForm() {
+  const form = document.getElementById("announcementForm");
+  if (!form) return;
+  const msg = document.getElementById("annMsg");
+  const deleteBtn = document.getElementById("annDeleteBtn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideMsg(msg);
+    const fileInput = document.getElementById("annImage");
+    const title = document.getElementById("annTitle").value.trim();
+    const active = document.getElementById("annActive").checked;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const file = fileInput.files[0];
+
+    submitBtn.disabled = true;
+    try {
+      if (!file) {
+        // لا صورة جديدة: تحديث العنوان/حالة التفعيل فقط للوحة الموجودة
+        await db.collection("meta").doc("announcement").set(
+          { title, active, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+          { merge: true }
+        );
+        showMsg(msg, "تم تحديث الإعدادات.", "success");
+      } else {
+        submitBtn.textContent = "جارٍ ضغط الصورة ورفعها...";
+        const imageDataUrl = await compressImageForStorage(file);
+        await db.collection("meta").doc("announcement").set({
+          imageDataUrl, title, active,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        showMsg(msg, "تم حفظ اللوحة ونشرها بنجاح ✅ ستظهر للمعلمين عند دخولهم القادم.", "success");
+        form.reset();
+        document.getElementById("annActive").checked = true;
+      }
+      loadAnnouncementPreview();
+    } catch (err) {
+      console.error(err);
+      showMsg(msg, err.message || "تعذّر الحفظ", "error");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "حفظ ونشر";
+    }
+  });
+
+  deleteBtn.addEventListener("click", () => {
+    confirmAction(
+      "إزالة اللوحة الدعائية",
+      "هل تريدين إزالة اللوحة الدعائية الحالية؟ لن تظهر لأي معلم بعد الآن.",
+      async () => {
+        try {
+          await db.collection("meta").doc("announcement").delete();
+          loadAnnouncementPreview();
+        } catch (err) {
+          console.error(err);
+          alert("تعذّر الحذف");
+        }
+      },
+      "إزالة"
+    );
+  });
+
+  loadAnnouncementPreview();
+}
+
+async function loadAnnouncementPreview() {
+  const wrap = document.getElementById("annPreviewWrap");
+  if (!wrap) return;
+  try {
+    const doc = await db.collection("meta").doc("announcement").get();
+    if (!doc.exists || !doc.data().imageDataUrl) {
+      wrap.innerHTML = `<div class="empty-state"><div class="icon">🖼️</div>لا توجد لوحة دعائية مرفوعة حالياً.</div>`;
+      return;
+    }
+    const d = doc.data();
+    wrap.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap">
+        <span class="pill ${d.active ? "teacher" : "admin"}">${d.active ? "مفعّلة حالياً للمعلمين" : "موقوفة مؤقتاً"}</span>
+        ${d.title ? `<strong>${escapeHtml(d.title)}</strong>` : ""}
+      </div>
+      <img src="${d.imageDataUrl}" alt="اللوحة الدعائية" style="max-width:100%; max-height:400px; border-radius:12px; border:1px solid var(--panel-border)" />
+    `;
+  } catch (err) {
+    console.error(err);
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div>تعذّر تحميل اللوحة.</div>`;
   }
 }
 

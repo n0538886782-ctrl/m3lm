@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderAdminNote(profile.adminNote);
       setupNotifBell();
       setupElementSearch();
+      loadAndShowAnnouncement();
       document.getElementById("exportReportBtn").addEventListener("click", () => {
         printTeacherReport(PROFILE, ELEMENTS, EVIDENCES);
       });
@@ -99,6 +100,41 @@ function setupNav() {
       });
     });
   });
+}
+
+/* ---------------- اللوحة الدعائية (يضعها المدير من لوحة التحكم) ---------------- */
+async function loadAndShowAnnouncement() {
+  try {
+    const doc = await db.collection("meta").doc("announcement").get();
+    if (!doc.exists) return;
+    const d = doc.data();
+    if (!d.active || !d.imageDataUrl) return;
+
+    const version = d.updatedAt && d.updatedAt.toMillis ? String(d.updatedAt.toMillis()) : "0";
+    const seenKey = `annSeen_${PROFILE.uid}`;
+    if (localStorage.getItem(seenKey) === version) return; // سبق للمعلم إغلاقها
+
+    const overlay = document.getElementById("announcementOverlay");
+    if (!overlay) return;
+    document.getElementById("announcementImg").src = d.imageDataUrl;
+    const titleEl = document.getElementById("announcementTitle");
+    if (d.title) {
+      titleEl.textContent = d.title;
+      titleEl.style.display = "";
+    } else {
+      titleEl.style.display = "none";
+    }
+    overlay.style.display = "flex";
+
+    const close = () => {
+      overlay.style.display = "none";
+      localStorage.setItem(seenKey, version);
+    };
+    document.getElementById("announcementCloseBtn").onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 /* ---------------- البحث عن عنصر (أساسي أو فرعي) ---------------- */
