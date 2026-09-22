@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupBiometricToggle(profile);
       renderAdminNote(profile.adminNote);
       setupNotifBell();
+      setupElementSearch();
       document.getElementById("exportReportBtn").addEventListener("click", () => {
         printTeacherReport(PROFILE, ELEMENTS, EVIDENCES);
       });
@@ -97,6 +98,39 @@ function setupNav() {
         sec.hidden = sec.dataset.panel !== target;
       });
     });
+  });
+}
+
+/* ---------------- البحث عن عنصر (أساسي أو فرعي) ---------------- */
+let CURRENT_SEARCH = "";
+function setupElementSearch() {
+  const input = document.getElementById("elementSearch");
+  if (!input) return;
+  input.addEventListener("input", () => {
+    CURRENT_SEARCH = input.value.trim();
+    applyElementSearch();
+  });
+}
+function applyElementSearch() {
+  const q = CURRENT_SEARCH.toLocaleLowerCase("ar");
+  document.querySelectorAll(".element-card").forEach((card) => {
+    const mainTitle = (card.querySelector(".element-titles strong")?.textContent || "").toLocaleLowerCase("ar");
+    const subEls = card.querySelectorAll(".sub-element");
+    let anyVisibleSub = false;
+
+    if (subEls.length) {
+      subEls.forEach((sub) => {
+        const subTitleEl = sub.querySelector(".sub-element-head strong");
+        const subTitle = (subTitleEl ? subTitleEl.textContent : mainTitle).toLocaleLowerCase("ar");
+        const match = !q || subTitle.includes(q) || mainTitle.includes(q);
+        sub.style.display = match ? "" : "none";
+        if (match) anyVisibleSub = true;
+      });
+    }
+
+    const show = !q || mainTitle.includes(q) || anyVisibleSub;
+    card.style.display = show ? "" : "none";
+    if (q && show) card.classList.add("open");
   });
 }
 
@@ -235,12 +269,22 @@ function evidenceBlockHtml(leaf, isSub) {
       <div class="evidence-list" data-list>
         ${evs.length ? evs.map((ev) => `
           <div class="evidence-item">
-            <div class="evidence-icon">${evidenceIcon(ev.type)}</div>
-            <div class="evidence-info">
-              <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">${escapeHtml(ev.note || ev.fileName || ev.url)}</a>
-              <span>${formatDate(ev.createdAt)} ${TEACHER_STATUS_BADGE[ev.status] || TEACHER_STATUS_BADGE.pending}</span>
+            <div class="evidence-item-top">
+              <div class="evidence-icon">${evidenceIcon(ev.type)}</div>
+              <div class="evidence-info">
+                <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">${escapeHtml(ev.note || ev.fileName || ev.url)}</a>
+                <span>${formatDate(ev.createdAt)} ${TEACHER_STATUS_BADGE[ev.status] || TEACHER_STATUS_BADGE.pending}</span>
+              </div>
+              <div class="evidence-actions">
+                <button type="button" class="btn btn-ghost btn-sm" data-edit-evidence="${ev.id}" data-ev-type="${ev.type}">تعديل</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-move-evidence="${ev.id}">نقل</button>
+                <button type="button" class="btn btn-danger btn-sm" data-del-evidence="${ev.id}" data-leaf-id="${leaf.id}">حذف</button>
+              </div>
             </div>
-            <button class="btn btn-danger btn-sm" data-del-evidence="${ev.id}" data-leaf-id="${leaf.id}">حذف</button>
+            <div class="evidence-move-row" data-move-row="${ev.id}" style="display:none">
+              <select data-move-select="${ev.id}"></select>
+              <button type="button" class="btn btn-primary btn-sm" data-move-confirm="${ev.id}" data-cur-leaf="${leaf.id}">تأكيد النقل</button>
+            </div>
           </div>`).join("") : `<div class="evidence-empty">لم تُضِف أي شاهد لهذا العنصر بعد</div>`}
       </div>
 
@@ -279,6 +323,12 @@ function renderElements() {
 
   wrap.innerHTML = `<div class="panel" style="padding:10px 10px"><div style="display:flex; flex-direction:column; gap:10px" id="cardsList"></div></div>`;
   const list = document.getElementById("cardsList");
+
+  // خيارات "نقل" — كل الشواهد التي يمكن نقل شاهد إليها، مجمّعة حسب العنصر الأساسي
+  const moveOptionsHtml = mains.map((m) => {
+    const leaves = childrenOf(m.id).length ? childrenOf(m.id) : [m];
+    return `<optgroup label="${escapeHtml(m.title)}">${leaves.map((l) => `<option value="${l.id}">${escapeHtml(l.title)}</option>`).join("")}</optgroup>`;
+  }).join("");
 
   mains.forEach((el, idx) => {
     const kids = childrenOf(el.id);
@@ -334,7 +384,38 @@ function renderElements() {
     card.querySelectorAll("[data-del-evidence]").forEach((btn) =>
       btn.addEventListener("click", () => handleDeleteEvidence(btn.dataset.delEvidence, el))
     );
+
+    // تعديل شاهد (الوصف، والرابط إن كان النوع "رابط")
+    card.querySelectorAll("[data-edit-evidence]").forEach((btn) =>
+      btn.addEventListener("click", () => handleEditEvidence(btn.dataset.editEvidence, btn.dataset.evType, el))
+    );
+
+    // نقل شاهد لعنصر آخر
+    card.querySelectorAll("[data-move-evidence]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const evId = btn.dataset.moveEvidence;
+        const row = card.querySelector(`[data-move-row="${evId}"]`);
+        if (!row) return;
+        const select = row.querySelector("select");
+        if (select && !select.dataset.filled) {
+          select.innerHTML = moveOptionsHtml;
+          select.dataset.filled = "1";
+        }
+        const ev = EVIDENCES.find((e) => e.id === evId);
+        if (ev && select) select.value = ev.elementId;
+        row.style.display = row.style.display === "none" ? "flex" : "none";
+      });
+    });
+    card.querySelectorAll("[data-move-confirm]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const row = btn.closest(".evidence-move-row");
+        const select = row.querySelector("select");
+        handleMoveEvidence(btn.dataset.moveConfirm, select.value, el);
+      });
+    });
   });
+
+  applyElementSearch();
 }
 
 /* إعادة فتح البطاقة الأساسية بعد إعادة الرسم */
@@ -406,6 +487,49 @@ function handleDeleteEvidence(evidenceId, mainEl) {
       alert("تعذّر حذف الشاهد");
     }
   });
+}
+
+async function handleEditEvidence(evidenceId, type, mainEl) {
+  const ev = EVIDENCES.find((e) => e.id === evidenceId);
+  if (!ev) return;
+
+  const newNote = prompt("وصف مختصر للشاهد:", ev.note || "");
+  if (newNote === null) return; // إلغاء
+
+  const updates = { note: newNote.trim() };
+
+  if (type === "link") {
+    const newUrl = prompt("الرابط:", ev.url || "");
+    if (newUrl === null) return; // إلغاء
+    if (!newUrl.trim()) { alert("الرابط لا يمكن أن يكون فارغاً"); return; }
+    updates.url = newUrl.trim();
+  }
+
+  try {
+    await db.collection("evidences").doc(evidenceId).update(updates);
+    await loadAll();
+    reopenCard(mainEl);
+  } catch (err) {
+    console.error(err);
+    alert("تعذّر تعديل الشاهد");
+  }
+}
+
+async function handleMoveEvidence(evidenceId, newElementId, mainEl) {
+  if (!newElementId) return;
+  const ev = EVIDENCES.find((e) => e.id === evidenceId);
+  if (ev && ev.elementId === newElementId) return; // لم يتغيّر شيء
+
+  try {
+    await db.collection("evidences").doc(evidenceId).update({ elementId: newElementId });
+    await loadAll();
+    const newMain = ELEMENTS.find((x) => x.id === newElementId);
+    const newMainEl = newMain && newMain.parentId ? ELEMENTS.find((x) => x.id === newMain.parentId) : newMain;
+    reopenCard(newMainEl || mainEl);
+  } catch (err) {
+    console.error(err);
+    alert("تعذّر نقل الشاهد");
+  }
 }
 
 /* ---------------- إعدادات الحساب ---------------- */

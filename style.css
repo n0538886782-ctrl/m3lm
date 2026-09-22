@@ -503,11 +503,15 @@ input, select, textarea{font-family:inherit;}
 
 .evidence-list{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
 .evidence-item{
-  display:flex; align-items:center; gap:12px;
+  display:flex; flex-direction:column; gap:8px;
   padding:10px 12px; border-radius:10px;
   background:rgba(255,255,255,0.035);
   border:1px solid var(--panel-border);
 }
+.evidence-item-top{display:flex; align-items:center; gap:12px;}
+.evidence-actions{display:flex; gap:6px; flex-wrap:wrap;}
+.evidence-move-row{display:flex; gap:6px; align-items:center;}
+.evidence-move-row select{flex:1; min-width:0;}
 .evidence-icon{
   width:32px; height:32px; border-radius:9px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
