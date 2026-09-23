@@ -233,6 +233,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (data.tickerText && data.tickerText.trim()) {
         const text = escapeHtml(data.tickerText.trim());
         tickerWrap.innerHTML = `<span class="ticker-track">${text}&nbsp;&nbsp;•&nbsp;&nbsp;${text}&nbsp;&nbsp;•&nbsp;&nbsp;${text}</span>`;
+        tickerWrap.style.setProperty("--ticker-duration", `${data.tickerSpeed || 22}s`);
         tickerWrap.style.display = "";
       } else {
         tickerWrap.style.display = "none";

@@ -102,17 +102,15 @@ function setupNav() {
   });
 }
 
-/* ---------------- اللوحة الدعائية (يضعها المدير من لوحة التحكم) ---------------- */
+/* ---------------- اللوحة الدعائية (يضعها المدير من لوحة التحكم) ----------------
+   تظهر في كل مرة يدخل فيها المعلم على صفحته طالما أنها مفعّلة، ويمكنه إغلاقها
+   لهذه الزيارة فقط (تظهر من جديد في الزيارة التالية). */
 async function loadAndShowAnnouncement() {
   try {
     const doc = await db.collection("meta").doc("announcement").get();
     if (!doc.exists) return;
     const d = doc.data();
     if (!d.active || !d.imageDataUrl) return;
-
-    const version = d.updatedAt && d.updatedAt.toMillis ? String(d.updatedAt.toMillis()) : "0";
-    const seenKey = `annSeen_${PROFILE.uid}`;
-    if (localStorage.getItem(seenKey) === version) return; // سبق للمعلم إغلاقها
 
     const overlay = document.getElementById("announcementOverlay");
     if (!overlay) return;
@@ -126,10 +124,7 @@ async function loadAndShowAnnouncement() {
     }
     overlay.style.display = "flex";
 
-    const close = () => {
-      overlay.style.display = "none";
-      localStorage.setItem(seenKey, version);
-    };
+    const close = () => { overlay.style.display = "none"; };
     document.getElementById("announcementCloseBtn").onclick = close;
     overlay.onclick = (e) => { if (e.target === overlay) close(); };
   } catch (err) {

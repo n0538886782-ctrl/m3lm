@@ -1220,6 +1220,10 @@ async function loadCurrentBrandingPreview() {
     if (data.tickerText) {
       document.getElementById("tickerInput").value = data.tickerText;
     }
+    if (data.tickerSpeed) {
+      document.getElementById("tickerSpeedInput").value = data.tickerSpeed;
+      document.getElementById("tickerSpeedValue").textContent = data.tickerSpeed;
+    }
   } catch (err) { console.error(err); }
 }
 
@@ -1301,12 +1305,19 @@ function setupBannerAndTicker() {
 
   const tickerInput = document.getElementById("tickerInput");
   const tickerMsg = document.getElementById("tickerMsg");
+  const tickerSpeedInput = document.getElementById("tickerSpeedInput");
+  const tickerSpeedValue = document.getElementById("tickerSpeedValue");
+  tickerSpeedInput?.addEventListener("input", () => {
+    tickerSpeedValue.textContent = tickerSpeedInput.value;
+  });
+
   document.getElementById("tickerSaveBtn").addEventListener("click", async () => {
     hideMsg(tickerMsg);
     const text = tickerInput.value.trim();
+    const speed = Number(tickerSpeedInput?.value) || 22;
     try {
-      await db.collection("meta").doc("branding").set({ tickerText: text }, { merge: true });
-      showMsg(tickerMsg, "تم حفظ العبارة، وستظهر في صفحة المعلمين فوراً.", "success");
+      await db.collection("meta").doc("branding").set({ tickerText: text, tickerSpeed: speed }, { merge: true });
+      showMsg(tickerMsg, "تم حفظ العبارة وسرعتها، وستظهر في صفحة المعلمين فوراً.", "success");
     } catch (err) {
       console.error(err);
       showMsg(tickerMsg, "تعذّر حفظ العبارة (" + (err.code || err.message || "خطأ غير معروف") + ").", "error");
