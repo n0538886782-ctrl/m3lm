@@ -817,7 +817,7 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
   display:inline-block;
   white-space:nowrap;
   transform:translateX(100%);
-  animation:ticker-scroll 22s linear infinite;
+  animation:ticker-scroll var(--ticker-duration, 22s) linear infinite;
   color:#ffffff;
   font-weight:800;
   font-size:19px;

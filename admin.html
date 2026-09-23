@@ -363,6 +363,10 @@
           <label for="tickerInput">نص العبارة</label>
           <input type="text" id="tickerInput" placeholder="مثال: نتمنى لجميع المعلمين عاماً دراسياً موفقاً" />
         </div>
+        <div class="field">
+          <label for="tickerSpeedInput">سرعة الشريط: <span id="tickerSpeedValue">22</span> ثانية للدورة الواحدة (رقم أصغر = حركة أسرع)</label>
+          <input type="range" id="tickerSpeedInput" min="6" max="45" step="1" value="22" />
+        </div>
         <div style="display:flex; gap:8px">
           <button type="button" id="tickerSaveBtn" class="btn btn-primary btn-sm">حفظ العبارة</button>
           <button type="button" id="tickerResetBtn" class="btn btn-ghost btn-sm">إزالة العبارة</button>
