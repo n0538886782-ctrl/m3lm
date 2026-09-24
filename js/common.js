@@ -113,6 +113,7 @@ function guardPage(requiredRole, onReady) {
         window.location.href = profile.role === "admin" ? "admin.html" : "teacher.html";
         return;
       }
+      setupIdleLogout();
       onReady(profile);
     } catch (err) {
       console.error(err);
@@ -123,6 +124,28 @@ function guardPage(requiredRole, onReady) {
 
 function logout() {
   auth.signOut().then(() => (window.location.href = "index.html"));
+}
+
+/* ---------- تسجيل خروج تلقائي بعد نصف ساعة من عدم النشاط (لوحة المدير وصفحة المعلم) ---------- */
+const IDLE_LOGOUT_MS = 30 * 60 * 1000; // 30 دقيقة
+function setupIdleLogout() {
+  if (window.__idleLogoutSetup) return; // تفادي تكرار الإعداد
+  window.__idleLogoutSetup = true;
+
+  let idleTimer = null;
+  const resetIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      alert("تم تسجيل خروجك تلقائياً بسبب عدم النشاط لمدة نصف ساعة. الرجاء تسجيل الدخول من جديد.");
+      logout();
+    }, IDLE_LOGOUT_MS);
+  };
+
+  ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"].forEach((evt) =>
+    document.addEventListener(evt, resetIdleTimer, { passive: true })
+  );
+
+  resetIdleTimer();
 }
 
 /* ---------- نافذة تأكيد عامة (تُستخدم في الحذف) ---------- */
