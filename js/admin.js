@@ -112,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupBiometricToggle(profile);
       setupRoleTabs();
       setupAnnouncementForm();
+      document.getElementById("uploadReportBtn").addEventListener("click", exportUploadStatusReport);
       document.getElementById("seedBtn").addEventListener("click", () => seedElementsFor(ELEMENTS_VIEW_JOBTYPE));
       document.getElementById("updateSubsBtn").addEventListener("click", updateTeacherSubs);
 
@@ -217,7 +218,42 @@ function setupRoleTabs() {
   }
 }
 
-/* ---------------- اللوحة الدعائية ---------------- */
+/* ---------------- تقرير الرفع الجماعي (من قام برفع شواهد ومن لم يقم) ---------------- */
+function exportUploadStatusReport() {
+  if (!TEACHERS_CACHE.length) {
+    alert("لا يوجد معلمون بعد.");
+    return;
+  }
+
+  const rows = [["الاسم", "اسم المستخدم", "الدور الوظيفي", "عدد العناصر المكتملة", "إجمالي عناصر دوره", "نسبة الإنجاز", "هل رفع شواهد؟", "عدد الشواهد الكلي", "تاريخ آخر رفع"]];
+
+  const sorted = [...TEACHERS_CACHE].sort((a, b) => a.name.localeCompare(b.name, "ar"));
+
+  sorted.forEach((t) => {
+    const jt = t.jobType || "teacher";
+    const myEvidences = ALL_EVIDENCES.filter((e) => e.teacherUid === t.uid);
+    const pct = weightedPct(t.completedIds, jt);
+    const totalLeaves = allLeaves(jt).length;
+    let lastUpload = "—";
+    if (myEvidences.length) {
+      const maxMs = Math.max(...myEvidences.map((e) => (e.createdAt && e.createdAt.toMillis ? e.createdAt.toMillis() : 0)));
+      if (maxMs) lastUpload = new Date(maxMs).toLocaleDateString("ar-SA");
+    }
+    rows.push([
+      t.name, t.username, jobTypeLabel(jt),
+      t.completedCount, totalLeaves, pct + "%",
+      myEvidences.length ? "نعم ✅" : "لا ❌",
+      myEvidences.length, lastUpload,
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{ wch: 20 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "تقرير الرفع");
+  const today = new Date().toLocaleDateString("en-CA"); // yyyy-mm-dd لاسم ملف آمن
+  XLSX.writeFile(wb, `تقرير_الرفع_الجماعي_${today}.xlsx`);
+}
 function setupAnnouncementForm() {
   const form = document.getElementById("announcementForm");
   if (!form) return;
@@ -1117,10 +1153,12 @@ function showTeacherEvidences(uid, name) {
                 <div class="evidence-info">
                   <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">${escapeHtml(ev.note || ev.url)}</a>
                   <span>${formatDate(ev.createdAt)} ${REVIEW_BADGE[ev.status] || REVIEW_BADGE.pending}</span>
+                  ${ev.adminComment ? `<div class="admin-comment">💬 ملاحظتك: ${escapeHtml(ev.adminComment)}</div>` : ""}
                 </div>
                 <div class="row-actions">
                   <button class="btn btn-ghost btn-sm" data-review="approved" data-ev="${ev.id}" title="قبول الشاهد">✅ قبول</button>
                   <button class="btn btn-ghost btn-sm" data-review="needs_review" data-ev="${ev.id}" title="طلب تعديل">✏️ يحتاج تعديل</button>
+                  <button class="btn btn-ghost btn-sm" data-comment="${ev.id}" title="كتابة/تعديل ملاحظة">💬 ملاحظة</button>
                 </div>
               </div>`).join("")}
           </div>
@@ -1133,6 +1171,9 @@ function showTeacherEvidences(uid, name) {
   body.querySelectorAll("[data-review]").forEach((btn) =>
     btn.addEventListener("click", () => setEvidenceStatus(btn.dataset.ev, btn.dataset.review, EVIDENCE_MODAL_TEACHER))
   );
+  body.querySelectorAll("[data-comment]").forEach((btn) =>
+    btn.addEventListener("click", () => addAdminComment(btn.dataset.comment, EVIDENCE_MODAL_TEACHER))
+  );
 }
 
 const REVIEW_BADGE = {
@@ -1142,18 +1183,39 @@ const REVIEW_BADGE = {
 };
 
 async function setEvidenceStatus(evidenceId, status, teacher) {
+  const updates = { status, reviewedAt: firebase.firestore.FieldValue.serverTimestamp() };
+
+  if (status === "needs_review") {
+    const ev = ALL_EVIDENCES.find((e) => e.id === evidenceId);
+    const note = prompt("اكتبي ملاحظة توضح للمعلم ما يحتاج تعديله (اختياري):", (ev && ev.adminComment) || "");
+    if (note === null) return; // ألغت المديرة
+    updates.adminComment = note.trim();
+  }
+
   try {
-    await db.collection("evidences").doc(evidenceId).update({
-      status,
-      reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    await db.collection("evidences").doc(evidenceId).update(updates);
     toast(status === "approved" ? "تم قبول الشاهد ✅" : "تم إرسال طلب التعديل للمعلم");
     const evIdx = ALL_EVIDENCES.findIndex((e) => e.id === evidenceId);
-    if (evIdx > -1) { ALL_EVIDENCES[evIdx].status = status; ALL_EVIDENCES[evIdx].reviewedAt = { toMillis: () => Date.now() }; }
+    if (evIdx > -1) Object.assign(ALL_EVIDENCES[evIdx], updates, { reviewedAt: { toMillis: () => Date.now() } });
     if (teacher) showTeacherEvidences(teacher.uid, teacher.name);
   } catch (err) {
     console.error(err);
     toast("تعذّر تحديث حالة الشاهد", true);
+  }
+}
+
+async function addAdminComment(evidenceId, teacher) {
+  const ev = ALL_EVIDENCES.find((e) => e.id === evidenceId);
+  const note = prompt("ملاحظتك على هذا الشاهد (ستظهر للمعلم في جرس الإشعارات):", (ev && ev.adminComment) || "");
+  if (note === null) return;
+  try {
+    await db.collection("evidences").doc(evidenceId).update({ adminComment: note.trim() });
+    if (ev) ev.adminComment = note.trim();
+    toast("تم حفظ الملاحظة");
+    if (teacher) showTeacherEvidences(teacher.uid, teacher.name);
+  } catch (err) {
+    console.error(err);
+    toast("تعذّر حفظ الملاحظة", true);
   }
 }
 

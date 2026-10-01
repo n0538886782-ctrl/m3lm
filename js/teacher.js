@@ -208,7 +208,7 @@ function setupNotifBell() {
 }
 
 function renderNotifications() {
-  const flagged = EVIDENCES.filter((e) => e.status === "needs_review");
+  const flagged = EVIDENCES.filter((e) => e.status === "needs_review" || (e.adminComment && e.adminComment.trim()));
   const badge = document.getElementById("notifBadge");
   const dropdown = document.getElementById("notifDropdown");
   if (!badge || !dropdown) return;
@@ -227,7 +227,7 @@ function renderNotifications() {
         return `
           <button class="notif-item" data-goto-main="${mainEl ? mainEl.id : ""}">
             <strong>✏️ ${escapeHtml(el ? el.title : "عنصر")}</strong>
-            <span>${escapeHtml(ev.note || ev.fileName || "شاهد يحتاج تعديل")}</span>
+            <span>${escapeHtml(ev.adminComment || ev.note || ev.fileName || "شاهد يحتاج تعديل")}</span>
           </button>`;
       }).join("")
     : `<div class="notif-empty">لا توجد إشعارات جديدة 🎉</div>`;
@@ -281,7 +281,7 @@ function renderProgress() {
 /* ---------------- بطاقات العناصر ---------------- */
 const TEACHER_STATUS_BADGE = {
   pending: '<span class="status-pill status-pending">قيد المراجعة</span>',
-  approved: '<span class="status-pill status-approved">✅ مقبول</span>',
+  approved: '<span class="status-pill status-approved">✅ تم قبوله</span>',
   needs_review: '<span class="status-pill status-needs-review">✏️ يحتاج تعديل</span>',
 };
 
@@ -305,6 +305,7 @@ function evidenceBlockHtml(leaf, isSub) {
               <div class="evidence-info">
                 <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">${escapeHtml(ev.note || ev.fileName || ev.url)}</a>
                 <span>${formatDate(ev.createdAt)} ${TEACHER_STATUS_BADGE[ev.status] || TEACHER_STATUS_BADGE.pending}</span>
+                ${ev.adminComment ? `<div class="admin-comment">💬 ملاحظة المدير: ${escapeHtml(ev.adminComment)}</div>` : ""}
               </div>
               <div class="evidence-actions">
                 <button type="button" class="btn btn-ghost btn-sm" data-edit-evidence="${ev.id}" data-ev-type="${ev.type}">تعديل</button>
