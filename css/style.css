@@ -510,8 +510,15 @@ input, select, textarea{font-family:inherit;}
 }
 .evidence-item-top{display:flex; align-items:center; gap:12px;}
 .evidence-actions{display:flex; gap:6px; flex-wrap:wrap;}
-.evidence-move-row{display:flex; gap:6px; align-items:center;}
-.evidence-move-row select{flex:1; min-width:0;}
+.evidence-move-row{
+  display:none; flex-direction:column; gap:8px;
+  background:rgba(31,216,196,0.08); border:1px solid rgba(31,216,196,0.25);
+  border-radius:10px; padding:10px 12px; margin-top:4px;
+}
+.evidence-move-row.show{display:flex;}
+.evidence-move-label{font-size:12.5px; font-weight:600; color:var(--accent-teal);}
+.evidence-move-controls{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+.evidence-move-controls select{flex:1; min-width:140px;}
 .evidence-icon{
   width:32px; height:32px; border-radius:9px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
@@ -520,6 +527,11 @@ input, select, textarea{font-family:inherit;}
 .evidence-info{flex:1; min-width:0;}
 .evidence-info a{font-size:13px; font-weight:600; text-decoration:none; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .evidence-info span{font-size:11px; color:var(--text-3);}
+.admin-comment{
+  margin-top:4px; font-size:12px; color:var(--accent-gold);
+  background:rgba(232,185,95,0.1); border-radius:8px; padding:5px 9px;
+  white-space:normal; line-height:1.5;
+}
 .status-pill{
   display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px;
   border-radius:999px; margin-inline-start:6px;
@@ -817,7 +829,7 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
   display:inline-block;
   white-space:nowrap;
   transform:translateX(100%);
-  animation:ticker-scroll 22s linear infinite;
+  animation:ticker-scroll var(--ticker-duration, 22s) linear infinite;
   color:#ffffff;
   font-weight:800;
   font-size:19px;
@@ -842,6 +854,9 @@ tbody tr:hover{background:rgba(255,255,255,0.02);}
 }
 .app-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 .app-toast.error{background:#7a2323;}
+
+.nav-link-wrap{position:relative;}
+#evidenceNotifDropdown{width:100%; max-height:280px;}
 
 /* جرس الإشعارات (بوابة المعلم) */
 .notif-bell-wrap{position:relative;}
