@@ -113,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupRoleTabs();
       setupAnnouncementForm();
       document.getElementById("uploadReportBtn").addEventListener("click", exportUploadStatusReport);
+      setupEvidenceNotifDropdown();
       document.getElementById("seedBtn").addEventListener("click", () => seedElementsFor(ELEMENTS_VIEW_JOBTYPE));
       document.getElementById("updateSubsBtn").addEventListener("click", updateTeacherSubs);
 
@@ -1040,6 +1041,72 @@ async function markEvidenceAsSeen() {
     lastSeenEvidenceAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
   CURRENT_PROFILE.lastSeenEvidenceAt = { toMillis: () => Date.now() };
+}
+
+/* قائمة أسماء المعلمين الذين رفعوا شواهد جديدة — تظهر عند الضغط على شارة الإشعار */
+function setupEvidenceNotifDropdown() {
+  const badge = document.getElementById("newEvidenceBadge");
+  const dropdown = document.getElementById("evidenceNotifDropdown");
+  if (!badge || !dropdown) return;
+
+  badge.addEventListener("click", (e) => {
+    e.stopPropagation(); // حتى ما يفتح تبويب "إدارة المعلمين" مباشرة
+    const isOpen = dropdown.style.display !== "none";
+    if (isOpen) {
+      dropdown.style.display = "none";
+      return;
+    }
+    renderEvidenceNotifDropdown();
+    dropdown.style.display = "block";
+  });
+
+  // إغلاق القائمة عند الضغط خارجها
+  document.addEventListener("click", (e) => {
+    if (!dropdown.contains(e.target) && e.target !== badge) {
+      dropdown.style.display = "none";
+    }
+  });
+}
+
+function renderEvidenceNotifDropdown() {
+  const dropdown = document.getElementById("evidenceNotifDropdown");
+  if (!dropdown) return;
+
+  const lastSeen = CURRENT_PROFILE.lastSeenEvidenceAt ? CURRENT_PROFILE.lastSeenEvidenceAt.toMillis() : 0;
+  const newEvidences = ALL_EVIDENCES.filter((e) => e.createdAt && e.createdAt.toMillis() > lastSeen);
+
+  // تجميع حسب المعلم: الاسم + عدد الشواهد الجديدة + أحدث وقت رفع
+  const byTeacher = new Map();
+  newEvidences.forEach((ev) => {
+    const t = TEACHERS_CACHE.find((x) => x.uid === ev.teacherUid);
+    if (!t) return;
+    const ms = ev.createdAt.toMillis();
+    if (!byTeacher.has(t.uid)) byTeacher.set(t.uid, { name: t.name, uid: t.uid, count: 0, latest: 0 });
+    const entry = byTeacher.get(t.uid);
+    entry.count += 1;
+    entry.latest = Math.max(entry.latest, ms);
+  });
+
+  const list = [...byTeacher.values()].sort((a, b) => b.latest - a.latest);
+
+  dropdown.innerHTML = list.length
+    ? list.map((t) => `
+        <button class="notif-item" data-goto-teacher="${t.uid}" data-teacher-name="${escapeHtml(t.name)}">
+          <strong>${escapeHtml(t.name)}</strong>
+          <span>${t.count} شاهد${t.count > 1 ? "اً" : ""} جديد${t.count > 1 ? "اً" : ""} — ${new Date(t.latest).toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}</span>
+        </button>`).join("")
+    : `<div class="notif-empty">لا توجد شواهد جديدة 🎉</div>`;
+
+  dropdown.querySelectorAll("[data-goto-teacher]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      dropdown.style.display = "none";
+      document.querySelectorAll(".nav-link[data-section]").forEach((l) => l.classList.remove("active"));
+      document.querySelector('.nav-link[data-section="teachers"]').classList.add("active");
+      document.querySelectorAll("section.section").forEach((sec) => { sec.hidden = sec.dataset.panel !== "teachers"; });
+      showTeacherEvidences(btn.dataset.gotoTeacher, btn.dataset.teacherName);
+      markEvidenceAsSeen();
+    });
+  });
 }
 
 function weightedPct(completedIds, jobType) {
