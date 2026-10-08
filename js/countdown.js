@@ -81,7 +81,7 @@
     card = document.createElement('div');
     card.id = 'cd-card';
     card.className = 'cd-card';
-    var anchor = document.querySelector('#ticker, #tickerBar, .ticker, [id*="ticker"], [class*="ticker"]');
+    var anchor = document.getElementById('tickerWrap') || document.getElementById('siteBannerWrap');
     if (anchor && anchor.parentNode) {
       anchor.parentNode.insertBefore(card, anchor.nextSibling);
     } else {
