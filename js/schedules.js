@@ -56,7 +56,10 @@
     '.sch-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}' +
     '.sch-add input{flex:1;min-width:220px}' +
     '.sch-actions a.btn{text-decoration:none}' +
-    '.sch-hidden-input{display:none}';
+    '.sch-hidden-input{display:none}' +
+    '.sch-addbox{margin-top:22px;padding-top:18px;border-top:1px dashed rgba(128,128,128,.4)}' +
+    '.sch-addtitle{margin:0 0 6px;font-size:16px}' +
+    '.sch-filename{display:block;margin-top:8px;opacity:.8}';
   function injectCss() {
     if (document.getElementById('sch-style')) return;
     var s = document.createElement('style');
@@ -162,21 +165,40 @@
       '</strong><small>' + status + '</small></div><div class="sch-actions">' + actions + '</div></div>';
   }
 
+  function listEl() { return document.getElementById('schList'); }
+
   function render() {
     injectCss();
-    var html = items.length
+    var el = listEl();
+    if (!el) return;
+    el.innerHTML = items.length
       ? '<div class="sch-list">' + items.map(cardHtml).join('') + '</div>'
       : '<p class="panel-sub">' + (isAdmin ? 'جاري تجهيز قائمة الجداول…' : 'لا توجد جداول مضافة حتى الآن.') + '</p>';
-    if (isAdmin) {
-      html += '<div class="sch-add"><input type="text" id="schNewTitle" placeholder="اسم جدول جديد (مثال: جدول الاختبارات)" />' +
-        '<button class="btn btn-primary btn-sm" data-act="add">+ إضافة جدول</button></div>';
-    }
-    // حافظ على النص المكتوب في خانة الإضافة عند تحديث القائمة
-    var old = document.getElementById('schNewTitle');
-    var keep = old ? old.value : '';
-    root.innerHTML = html;
-    var inp = document.getElementById('schNewTitle');
-    if (inp && keep) inp.value = keep;
+  }
+
+  // نموذج "إضافة جدول جديد" (للمدير) — يُبنى مرة واحدة ولا يُعاد رسمه عند تحديث القائمة
+  function buildAddForm() {
+    var f = document.getElementById('schForm');
+    if (!f) return;
+    f.innerHTML = '' +
+      '<div class="sch-addbox">' +
+      '<h3 class="sch-addtitle">إضافة جدول جديد</h3>' +
+      '<p class="panel-sub" style="margin:0 0 10px">اكتب اسم الجدول، واختر ملف PDF (اختياري — يمكنك رفعه لاحقاً من بطاقة الجدول)، ثم اضغط إضافة.</p>' +
+      '<div class="sch-add">' +
+      '<input type="text" id="schNewTitle" placeholder="اسم الجدول (مثال: جدول الاختبارات النهائية)" maxlength="120" />' +
+      '<label class="btn btn-ghost btn-sm" style="cursor:pointer" id="schNewFileLbl">اختيار ملف PDF' +
+      '<input type="file" class="sch-hidden-input" id="schNewFile" accept="application/pdf,.pdf"></label>' +
+      '<button class="btn btn-primary btn-sm" id="schAddBtn" data-act="add">+ إضافة الجدول</button>' +
+      '</div>' +
+      '<small id="schNewFileName" class="sch-filename"></small>' +
+      '</div>';
+  }
+
+  function validatePdf(file) {
+    var okType = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    if (!okType) return 'الملف يجب أن يكون بصيغة PDF';
+    if (file.size > MAX_MB * 1024 * 1024) return 'حجم الملف أكبر من ' + MAX_MB + ' ميجابايت';
+    return '';
   }
 
   /* ---------- العمليات ---------- */
@@ -201,9 +223,8 @@
 
   async function handleUpload(id, file) {
     if (!file) return;
-    var okType = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
-    if (!okType) { note('الملف يجب أن يكون بصيغة PDF', true); render(); return; }
-    if (file.size > MAX_MB * 1024 * 1024) { note('حجم الملف أكبر من ' + MAX_MB + ' ميجابايت', true); render(); return; }
+    var verr = validatePdf(file);
+    if (verr) { note(verr, true); render(); return; }
     var it = items.filter(function (x) { return x.id === id; })[0];
     var oldFileId = it && it.fileId;
     busy[id] = true; render();
@@ -223,6 +244,46 @@
     }
   }
 
+  var adding = false;
+  async function handleAdd() {
+    if (adding) return;
+    var inp = document.getElementById('schNewTitle');
+    var fileInp = document.getElementById('schNewFile');
+    var btn = document.getElementById('schAddBtn');
+    var title = inp ? inp.value.trim() : '';
+    var file = fileInp && fileInp.files && fileInp.files[0];
+    if (!title) { note('اكتب اسم الجدول أولاً', true); return; }
+    if (file) {
+      var verr = validatePdf(file);
+      if (verr) { note(verr, true); return; }
+    }
+    adding = true;
+    if (btn) { btn.disabled = true; btn.textContent = file ? 'جاري الرفع والإضافة…' : 'جاري الإضافة…'; }
+    try {
+      var data = {
+        title: title, order: Date.now(), builtin: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (file) {
+        var res = await uploadSchedule(file);
+        data.url = res.url; data.fileId = res.fileId; data.fileName = file.name;
+        data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      }
+      await col().add(data);
+      if (inp) inp.value = '';
+      if (fileInp) fileInp.value = '';
+      var nm = document.getElementById('schNewFileName');
+      if (nm) nm.textContent = '';
+      note('تمت إضافة الجدول' + (file ? ' ورفع ملفه' : ''));
+    } catch (err) {
+      console.error(err);
+      note('تعذّرت الإضافة: ' + (err.message || err), true);
+    } finally {
+      adding = false;
+      if (btn) { btn.disabled = false; btn.textContent = '+ إضافة الجدول'; }
+    }
+  }
+
   function handleClick(e) {
     var btn = e.target.closest('[data-act]');
     if (!btn || !isAdmin) return;
@@ -230,16 +291,7 @@
     var id = btn.getAttribute('data-id');
     var it = items.filter(function (x) { return x.id === id; })[0];
 
-    if (act === 'add') {
-      var inp = document.getElementById('schNewTitle');
-      var title = inp ? inp.value.trim() : '';
-      if (!title) { note('اكتب اسم الجدول أولاً', true); return; }
-      col().add({
-        title: title, order: Date.now(), builtin: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(function () { if (inp) inp.value = ''; note('تمت إضافة الجدول'); })
-        .catch(function (err) { note('تعذّرت الإضافة: ' + err.message, true); });
-    }
+    if (act === 'add') { handleAdd(); return; }
     if (act === 'delfile' && it) {
       confirmAction('حذف ملف الجدول', 'سيُزال الملف من «' + it.title + '» ويظهر للمعلمين أنه لم يُرفع بعد.', async function () {
         try {
@@ -267,6 +319,11 @@
 
   function handleChange(e) {
     var inp = e.target;
+    if (isAdmin && inp.id === 'schNewFile') {
+      var nm = document.getElementById('schNewFileName');
+      if (nm) nm.textContent = inp.files && inp.files[0] ? 'الملف المختار: ' + inp.files[0].name : '';
+      return;
+    }
     if (!isAdmin || !inp.matches || !inp.matches('input[type=file][data-up]')) return;
     var file = inp.files && inp.files[0];
     var id = inp.getAttribute('data-up');
@@ -284,7 +341,8 @@
       if (isAdmin && snap.empty) seedIfEmpty();
     }, function (err) {
       console.error('schedules:', err);
-      root.innerHTML = '<p class="panel-sub">تعذّر تحميل الجداول. تأكد من نشر قاعدة schedules في Firebase.</p>';
+      var le = listEl();
+      if (le) le.innerHTML = '<p class="panel-sub">تعذّر تحميل الجداول. تأكد من نشر قاعدة schedules في Firebase.</p>';
     });
   }
 
@@ -292,7 +350,8 @@
     injectCss();
     root.addEventListener('click', handleClick);
     root.addEventListener('change', handleChange);
-    root.innerHTML = '<div class="loader"></div>';
+    root.innerHTML = '<div id="schList"><div class="loader"></div></div>' + (isAdmin ? '<div id="schForm"></div>' : '');
+    if (isAdmin) buildAddForm();
     if (!window.firebase || !firebase.auth) { console.warn('schedules.js: Firebase غير محمّل'); return; }
     firebase.auth().onAuthStateChanged(function (u) { if (u) start(); });
   }
