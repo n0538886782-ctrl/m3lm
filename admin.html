@@ -66,6 +66,7 @@
       </div>
       <button class="nav-link" data-section="elements"><span class="dot"></span> عناصر التقييم</button>
       <button class="nav-link" data-section="announcement"><span class="dot"></span> اللوحة الدعائية</button>
+      <button class="nav-link" data-section="schedules"><span class="dot"></span> الجداول المدرسية</button>
       <div class="nav-group-label">الحساب</div>
       <button class="nav-link" data-section="account"><span class="dot"></span> إعدادات الحساب</button>
       <button class="nav-link" data-logout><span class="dot"></span> تسجيل الخروج</button>
@@ -303,6 +304,19 @@
     </section>
 
     <!-- ============ إعدادات الحساب ============ -->
+    <!-- ============ الجداول المدرسية ============ -->
+    <section class="section" data-panel="schedules" hidden>
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">الجداول المدرسية</h1>
+          <p class="page-sub">ارفع ملف PDF لكل جدول وسيظهر تلقائياً لجميع المعلمين في صفحاتهم. يمكنك أيضاً إضافة أي جدول آخر يخص المدرسة. عند أول رفع سيطلب منك Google الإذن بالوصول إلى Drive.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div id="schedulesRoot" data-mode="admin"></div>
+      </div>
+    </section>
+
     <section class="section" data-panel="account" hidden>
       <div class="main-header">
         <div>
@@ -437,10 +451,14 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="js/firebase-config.js"></script>
+<script src="js/drive-config.js"></script>
+<script src="js/drive.js"></script>
 <script src="js/bg-animation.js"></script>
 <script src="js/common.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/schedules.js"></script>
 <script src="js/countdown.js"></script>
 </body>
 </html>
