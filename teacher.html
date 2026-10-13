@@ -69,6 +69,7 @@
     <nav class="sidebar-nav">
       <div class="nav-group-label">القوائم</div>
       <button class="nav-link active" data-section="portfolio"><span class="dot"></span> ملف الأداء الوظيفي</button>
+      <button class="nav-link" data-section="schedules"><span class="dot"></span> الجداول المدرسية</button>
       <div class="nav-group-label">الحساب</div>
       <button class="nav-link" data-section="account"><span class="dot"></span> إعدادات الحساب</button>
       <button class="nav-link" data-logout><span class="dot"></span> تسجيل الخروج</button>
@@ -140,6 +141,19 @@
 
       <div id="elementsWrap">
         <div class="loader"></div>
+      </div>
+    </section>
+
+    <!-- ============ الجداول المدرسية ============ -->
+    <section class="section" data-panel="schedules" hidden>
+      <div class="main-header">
+        <div>
+          <h1 class="page-title">الجداول المدرسية</h1>
+          <p class="page-sub">الجداول المعتمدة من إدارة المدرسة — اضغط «عرض الجدول» لفتح الملف</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div id="schedulesRoot" data-mode="teacher"></div>
       </div>
     </section>
 
@@ -216,6 +230,7 @@
 <script src="js/drive.js"></script>
 <script src="js/common.js"></script>
 <script src="js/teacher.js"></script>
+<script src="js/schedules.js"></script>
 <script src="js/countdown.js"></script>
 </body>
 </html>
