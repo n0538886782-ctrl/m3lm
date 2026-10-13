@@ -19,7 +19,7 @@
   ];
   var FOLDER_NAME = 'الجداول المدرسية';
   var FOLDER_KEY = 'driveSchedulesFolderId';
-  var MAX_MB = 25;
+  var MAX_MB = 50;
 
   var items = [];
   var busy = {};
