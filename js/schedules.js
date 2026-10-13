@@ -23,6 +23,8 @@
 
   var items = [];
   var busy = {};
+  var pending = {};   // ملفات مختارة تنتظر ضغطة "تأكيد الرفع" (لازمة لفتح نافذة إذن جوجل)
+  var tok = null, tokExp = 0;
   var started = false;
   var seedChecked = false;
 
@@ -69,6 +71,50 @@
   }
 
   /* ---------- Google Drive (مجلد مستقل للجداول) ---------- */
+  function haveToken() { return !!tok && Date.now() < tokExp; }
+
+  // يطلب إذن Drive. يجب أن يُستدعى مباشرةً من ضغطة زر (وإلا يحجب المتصفح النافذة المنبثقة).
+  // يرفض برسالة واضحة بدل أن يبقى معلّقًا إذا حُجبت النافذة أو أُغلقت أو انتهت المهلة.
+  function getToken() {
+    return new Promise(function (resolve, reject) {
+      if (haveToken()) { resolve(tok); return; }
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        reject(new Error('تعذّر تحميل خدمة Google. تحقق من الإنترنت وأعد تحميل الصفحة.')); return;
+      }
+      if (typeof DRIVE_CLIENT_ID === 'undefined') {
+        reject(new Error('لم يتم العثور على إعدادات Drive (drive-config.js).')); return;
+      }
+      var done = false;
+      var timer = setTimeout(function () {
+        fail('لم يكتمل ربط Google Drive. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.');
+      }, 120000);
+      function fail(m) { if (done) return; done = true; clearTimeout(timer); reject(new Error(m)); }
+      try {
+        var client = google.accounts.oauth2.initTokenClient({
+          client_id: DRIVE_CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/drive.file',
+          callback: function (resp) {
+            if (resp.error) { fail('تم رفض الإذن، أو حدث خطأ أثناء تسجيل الدخول بجوجل.'); return; }
+            if (done) return;
+            done = true; clearTimeout(timer);
+            tok = resp.access_token;
+            tokExp = Date.now() + ((+resp.expires_in || 3600) - 60) * 1000;
+            resolve(tok);
+          },
+          error_callback: function (err) {
+            var t = err && err.type;
+            fail(t === 'popup_failed_to_open'
+              ? 'المتصفح منع نافذة تسجيل جوجل. اسمح بالنوافذ المنبثقة (Pop-ups) لهذا الموقع ثم أعد المحاولة.'
+              : t === 'popup_closed'
+                ? 'أُغلقت نافذة جوجل قبل إكمال الإذن. أعد المحاولة ووافق على الإذن.'
+                : 'تعذّر ربط Google Drive.');
+          }
+        });
+        client.requestAccessToken({ prompt: '' });
+      } catch (e) { fail(e.message || 'تعذّر ربط Google Drive.'); }
+    });
+  }
+
   async function ensureSchedulesFolder(token) {
     var cached = localStorage.getItem(FOLDER_KEY);
     if (cached) {
@@ -84,6 +130,7 @@
     var sr = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)',
       { headers: { Authorization: 'Bearer ' + token } });
     var sd = await sr.json();
+    if (sd.error) throw new Error(sd.error.message || 'تعذّر الوصول إلى Drive');
     if (sd.files && sd.files.length) {
       localStorage.setItem(FOLDER_KEY, sd.files[0].id);
       return sd.files[0].id;
@@ -100,8 +147,7 @@
   }
 
   async function uploadSchedule(file) {
-    if (typeof getDriveToken !== 'function') throw new Error('ملفات ربط Google Drive غير محمّلة في هذه الصفحة');
-    var token = await getDriveToken();
+    var token = await getToken();
     var folderId = await ensureSchedulesFolder(token);
 
     var init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,webViewLink', {
@@ -114,6 +160,7 @@
       body: JSON.stringify({ name: file.name, parents: [folderId] })
     });
     if (!init.ok) {
+      if (init.status === 401) { tok = null; throw new Error('انتهت صلاحية ربط Drive، اضغط الرفع مرة أخرى.'); }
       var ed = await init.json().catch(function () { return null; });
       throw new Error((ed && ed.error && ed.error.message) || 'تعذّر بدء عملية الرفع إلى Drive');
     }
@@ -137,9 +184,9 @@
   // حذف الملف القديم من Drive (محاولة صامتة، وفقط إذا كان إذن Drive متاحًا في الجلسة الحالية)
   function deleteDriveFile(fileId) {
     try {
-      if (!fileId || typeof driveAccessToken === 'undefined' || !driveAccessToken) return;
+      if (!fileId || !haveToken()) return;
       fetch('https://www.googleapis.com/drive/v3/files/' + fileId, {
-        method: 'DELETE', headers: { Authorization: 'Bearer ' + driveAccessToken }
+        method: 'DELETE', headers: { Authorization: 'Bearer ' + tok }
       }).catch(function () {});
     } catch (e) { /* لا شيء */ }
   }
@@ -149,11 +196,17 @@
     var url = safeUrl(it.url);
     var isBusy = !!busy[it.id];
     var status;
-    if (isBusy) status = 'جاري الرفع… لا تغلق الصفحة';
+    var pend = pending[it.id];
+    if (pend && !isBusy) status = 'الملف جاهز: ' + esc(pend.name) + ' — اضغط «تأكيد الرفع» وسيطلب Google إذن Drive (اسمح بالنوافذ المنبثقة)';
+    else if (isBusy) status = 'جاري الرفع… لا تغلق الصفحة';
     else if (url) status = (it.fileName ? esc(it.fileName) : 'تم رفع الملف') + (it.updatedAt ? ' — ' + esc(fmtDate(it.updatedAt)) : '');
     else status = 'لم يُرفع بعد';
 
     var actions = '';
+    if (pend && !isBusy) {
+      actions += '<button class="btn btn-primary btn-sm" data-act="confirmup" data-id="' + esc(it.id) + '">تأكيد الرفع</button>' +
+        '<button class="btn btn-ghost btn-sm" data-act="cancelup" data-id="' + esc(it.id) + '">إلغاء</button>';
+    }
     if (url) actions += '<a class="btn btn-primary btn-sm" href="' + esc(url) + '" target="_blank" rel="noopener">عرض الجدول</a>';
     if (isAdmin) {
       actions += '<label class="btn btn-ghost btn-sm" style="cursor:pointer">' + (url ? 'استبدال الملف' : 'اختيار ملف') +
@@ -221,10 +274,12 @@
     } catch (e) { console.error('schedules seed:', e); }
   }
 
-  async function handleUpload(id, file) {
+  async function handleUpload(id, file, force) {
     if (!file) return;
     var verr = validatePdf(file);
     if (verr) { note(verr, true); render(); return; }
+    if (!haveToken() && !force) { pending[id] = file; render(); return; }
+    delete pending[id];
     var it = items.filter(function (x) { return x.id === id; })[0];
     var oldFileId = it && it.fileId;
     busy[id] = true; render();
@@ -292,6 +347,12 @@
     var it = items.filter(function (x) { return x.id === id; })[0];
 
     if (act === 'add') { handleAdd(); return; }
+    if (act === 'confirmup') {
+      var pf = pending[id];
+      if (pf) handleUpload(id, pf, true);   // الاستدعاء مباشر من الضغطة ليُسمح بنافذة جوجل
+      return;
+    }
+    if (act === 'cancelup') { delete pending[id]; render(); return; }
     if (act === 'delfile' && it) {
       confirmAction('حذف ملف الجدول', 'سيُزال الملف من «' + it.title + '» ويظهر للمعلمين أنه لم يُرفع بعد.', async function () {
         try {
